@@ -177,7 +177,7 @@ def main():
 
     trafic = TraficSelfishDrivers(road_network, drivers)
 
-    for _ in trange(1000):
+    for _ in trange(10):
         trafic.run()
     travel_times, _ = trafic.run()
     print(f"Average travel time: {np.mean(travel_times)}")
