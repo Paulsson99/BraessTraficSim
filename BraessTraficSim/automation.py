@@ -6,46 +6,57 @@ from BraessTraficSim.demo import TraficSelfishDrivers
 from BraessTraficSim.plot import plot_mean_travel_times
 
 
-def plot_break_even(n: int):
-    ps = np.logspace(-3, -1, n)
+def plot_break_even(ps: np.ndarray, averages: int):
     fig, ax = plt.subplots(1)
 
     L1 = 20
-    L2 = 1000
+    L2 = 10000
 
     Ts = []
 
-    for p in tqdm(ps):
-        road_network = {
-            0: {1: (0.01, 0), 2: (0, 45)},
-            1: {3: (0, 45)},
-            2: {3: (0.01, 0)},
-            3: {}
-        }
-        drivers = 4000
-        sim = TraficSelfishDrivers(graph=road_network, N=drivers, driver_prob=p)
+    outer_pbar = trange(len(ps) * averages)
 
-        pbar = trange(L1 + L2, leave=False)
+    for p in ps:
+        T_tot = 0
+        for _ in range(averages):
+            road_network = {
+                0: {1: (0.01, 0), 2: (0, 45)},
+                1: {3: (0, 45)},
+                2: {3: (0.01, 0)},
+                3: {}
+            }
+            drivers = 4000
+            sim = TraficSelfishDrivers(graph=road_network, N=drivers, driver_prob=p)
 
-        traffic_time_1 = []
-        for _ in range(L1):
-            travel_times, _ = sim.run()
-            traffic_time_1.append(travel_times)
-            pbar.update()
-        sim.add_road(nodeA=1, nodeB=2, params=(0, 0))
-        mean1 = np.mean([np.mean(travel_time) for travel_time in traffic_time_1])
+            inner_pbar = trange(L1 + L2, leave=False)
 
-        traffic_time_2 = []
-        for i in range(L2):
-            travel_times, _ = sim.run()
-            mean_travel_time = np.mean(travel_times)
-            pbar.update()
-            if mean_travel_time > mean1 * 1.03:
-                break
+            traffic_time_1 = []
+            for _ in range(L1):
+                travel_times, _ = sim.run()
+                traffic_time_1.append(travel_times)
+                inner_pbar.update()
+            sim.add_road(nodeA=1, nodeB=2, params=(0, 0))
+            mean1 = np.mean([np.mean(travel_time) for travel_time in traffic_time_1])
 
-        pbar.close()
+            for i in range(L2):
+                travel_times, _ = sim.run()
+                mean_travel_time = np.mean(travel_times)
+                inner_pbar.update()
+                if mean_travel_time > mean1 * 1.03:
+                    break
 
-        Ts.append(i)
+            inner_pbar.close()
+            T_tot += i
+            
+            outer_pbar.update()
+
+        Ts.append(T_tot / averages)
+    
+    outer_pbar.close()
+
+    # Save the data
+    np.savetxt('ps.csv', ps, delimiter=',')
+    np.savetxt('Ts.csv', Ts, delimiter=',')
 
     ax.plot(ps, Ts)
     ax.set_xscale('log')
@@ -87,4 +98,4 @@ def plot_travel_times(ps: list[float]):
 
 if __name__ == '__main__':
     # plot_mean_travel_times(ps=[0.01, 0.02, 0.03])
-    plot_break_even(10)
+    plot_break_even(np.logspace(-3, 0, 50), averages=3)
