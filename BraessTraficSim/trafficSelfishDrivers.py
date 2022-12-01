@@ -1,11 +1,11 @@
 import numpy as np
 from driver import Driver
-RoadNetwork = dict[int, dict[int, tuple[float]]]
+road_network = dict[int, dict[int, tuple[float]]]
 
 
 class TrafficSelfishDrivers:
 
-    def __init__(self, graph: RoadNetwork, N: int):
+    def __init__(self, graph: road_network, N: int, driver_probability: float):
         """
         Args:
             graph: A representation of the road network. Keys are node numbers and values are list of connections
@@ -14,7 +14,7 @@ class TrafficSelfishDrivers:
         self.graph = graph
         self.N = N
         self.traffic_count = dict()
-        self.drivers = [Driver(graph, 0.01) for _ in range(N)]
+        self.drivers = [Driver(graph, driver_probability) for _ in range(N)]
 
     def evaluation_edge(self, a: float, b: float, u: int):
         """

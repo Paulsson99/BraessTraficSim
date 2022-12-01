@@ -6,11 +6,9 @@ from mycolorpy import colorlist as mcp
 from pprint import pprint
 from matplotlib.colors import LinearSegmentedColormap
 
-from trafficSelfishDrivers import TrafficSelfishDrivers
-
 
 class LargeNetwork:
-    def __init__(self, size_of_each_layer: list, traffic: np.ndarray):
+    def __init__(self, size_of_each_layer: list):
         """
         Create a large network
         Args:
@@ -22,7 +20,20 @@ class LargeNetwork:
         self.size_of_each_layer = size_of_each_layer
         self.layer_colors = mcp.gen_color(cmap="winter", n=self.number_of_layers)
         self.generate_multilayered_graph(*self.size_of_each_layer)
-        self.traffic = traffic
+
+        self.traffic = None
+        self.traffic_parameters = {} # dict {edges: (a,b)}
+        self.traffic_parameters_original = None
+        self.generate_traffic_parameters()
+
+    def generate_traffic_parameters(self):
+        """
+        Generate traffic parameters a,b to each edge
+        """
+        edge_list = [edge for edge in self.G.edges]
+        for edge in edge_list:
+            self.traffic_parameters[edge] = 100*np.random.rand(2)
+        self.traffic_parameters_original = self.traffic_parameters
 
     def generate_multilayered_graph(self, *size_of_each_layer):
         """
@@ -39,6 +50,14 @@ class LargeNetwork:
 
         for layer1, layer2 in nx.utils.pairwise(layers):
             self.G.add_edges_from(itertools.product(layer1, layer2))
+
+    def add_edge(self, edge: tuple):
+        """
+        Add edge (u,v) to the network
+        Args:
+            edge: A list of how many nodes per layer
+        """
+        self.G.add_edge(*edge)
 
     def remove_edge(self, edge: tuple):
         """
@@ -78,7 +97,7 @@ class LargeNetwork:
         node_color = [self.layer_colors[data["layer"]] for v, data in self.G.nodes(data=True)]
         pos = nx.multipartite_layout(self.G, subset_key="layer")
 
-        fig, ax = plt.subplots(1,figsize=(12, 8))
+        fig, ax = plt.subplots(1, figsize=(12, 8))
         nx.draw(self.G, pos, node_color=node_color,
                 edge_color=edge_color, edge_cmap=edge_cmap,
                 with_labels=True, arrows=True,
@@ -105,7 +124,11 @@ class LargeNetwork:
 
             while node == edge_list[edge_index][0]:
                 to_edge = edge_list[edge_index][1]
-                edges_dict[to_edge] = (node, node)
+                edge_key = edge_list[edge_index]
+
+                # Add traffic parameters to the edge
+                a, b = self.traffic_parameters[edge_key]
+                edges_dict[to_edge] = (a, b)
                 if edge_index < len(edge_list) - 1:
                     edge_index += 1
                 else:
@@ -115,19 +138,17 @@ class LargeNetwork:
 
 
 def main():
+
     # Initialise structure of the network
-    size_of_each_layer = [1, 2, 2, 1]
-    traffic = np.random.randn(sum(size_of_each_layer), sum(size_of_each_layer))
-    large_network = LargeNetwork(size_of_each_layer=size_of_each_layer, traffic=traffic)
+    size_of_each_layer = [1, 3, 4, 3, 1]
+    large_network = LargeNetwork(size_of_each_layer=size_of_each_layer)
 
     road_network = large_network.convert_to_graph_to_dict()
     pprint(road_network)
-
     large_network.plot_initial_graph()
 
-    large_network.assign_traffic_to_edges()
-    large_network.remove_edge((2,3))
-    large_network.plot_weighted_graph()
+
+
 
 
 if __name__ == '__main__':

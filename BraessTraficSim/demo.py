@@ -181,6 +181,8 @@ def main():
         trafic.run()
     travel_times, _ = trafic.run()
     print(f"Average travel time: {np.mean(travel_times)}")
+    print(travel_times)
+    print(len(travel_times))
 
     draw_road_network(road_network, trafic.trafic_count)
 

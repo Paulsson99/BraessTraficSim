@@ -1,21 +1,21 @@
 import numpy as np
 
-RoadNetwork = dict[int, dict[int, tuple[float]]]
+road_network = dict[int, dict[int, tuple[float]]]
 
 
 class Driver:
 
-    def __init__(self, graph: RoadNetwork, p: float) -> None:
+    def __init__(self, graph: road_network, p: float) -> None:
         self.graph = graph
         self.route = self.generate_random_route(0, 3)
         self.p = p
         self.best_travel_time = np.inf
         self.possible_route = None
 
-    def generate_random_route(self, startNode: int, endNode: int):
-        route = [startNode]
+    def generate_random_route(self, start_node: int, end_node: int):
+        route = [start_node]
 
-        while route[-1] != endNode:
+        while route[-1] != end_node:
             pos_next = self.graph[route[-1]].keys()
             pos_next = [n for n in pos_next if n not in route]
             route.append(np.random.choice(pos_next))
