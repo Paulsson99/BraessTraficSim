@@ -116,7 +116,7 @@ class LargeNetwork:
 
 def main():
     # Initialise structure of the network
-    size_of_each_layer = [1, 5, 3, 1]
+    size_of_each_layer = [1, 2, 2, 1]
     traffic = np.random.randn(sum(size_of_each_layer), sum(size_of_each_layer))
     large_network = LargeNetwork(size_of_each_layer=size_of_each_layer, traffic=traffic)
 
@@ -126,7 +126,7 @@ def main():
     large_network.plot_initial_graph()
 
     large_network.assign_traffic_to_edges()
-    large_network.remove_edge((7,9))
+    large_network.remove_edge((2,3))
     large_network.plot_weighted_graph()
 
 
