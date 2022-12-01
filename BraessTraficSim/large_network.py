@@ -32,7 +32,7 @@ class LargeNetwork:
         """
         edge_list = [edge for edge in self.G.edges]
         for edge in edge_list:
-            self.traffic_parameters[edge] = (100 * np.random.rand(), 100*np.random.rand())
+            self.traffic_parameters[edge] = (100 * np.random.rand(), 100 * np.random.rand())
         self.traffic_parameters_original = self.traffic_parameters.copy()
 
     def generate_multilayered_graph(self, *size_of_each_layer):
@@ -53,7 +53,7 @@ class LargeNetwork:
 
     def add_edge(self, edge: tuple):
         """
-        Add edge (u,v) to the network
+        Add edge (u,v) to the network,
         Args:
             edge: A list of how many nodes per layer
         """
@@ -149,6 +149,7 @@ def main():
     large_network.plot_initial_graph()
 
     large_network.remove_edge((4, 8))
+
     large_network.add_edge((4, 8))
 
 

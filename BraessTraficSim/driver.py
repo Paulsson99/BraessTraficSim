@@ -1,13 +1,13 @@
 import numpy as np
 
-road_network = dict[int, dict[int, tuple[float]]]
+road_network_structure = dict[int, dict[int, tuple[float]]]
 
 
 class Driver:
 
-    def __init__(self, graph: road_network, p: float) -> None:
-        self.graph = graph
-        self.route = self.generate_random_route(0, 3)
+    def __init__(self, road_network: road_network_structure, p: float) -> None:
+        self.road_network = road_network
+        self.route = self.generate_random_route(0, max(k for k, v in self.road_network.items()))
         self.p = p
         self.best_travel_time = np.inf
         self.possible_route = None
@@ -16,14 +16,14 @@ class Driver:
         route = [start_node]
 
         while route[-1] != end_node:
-            pos_next = self.graph[route[-1]].keys()
+            pos_next = self.road_network[route[-1]].keys()
             pos_next = [n for n in pos_next if n not in route]
             route.append(np.random.choice(pos_next))
         return route
 
     def get_route(self):
         if np.random.random() < self.p:
-            self.possible_route = self.generate_random_route(0, 3)
+            self.possible_route = self.generate_random_route(0, max(k for k, v in self.road_network.items()))
             return self.possible_route
         else:
             self.possible_route = None

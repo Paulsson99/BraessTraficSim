@@ -1,20 +1,21 @@
 import numpy as np
 from driver import Driver
-road_network = dict[int, dict[int, tuple[float]]]
+
+road_network_structure = dict[int, dict[int, tuple[float]]]
 
 
 class TrafficSelfishDrivers:
 
-    def __init__(self, graph: road_network, N: int, driver_probability: float):
+    def __init__(self, road_network: road_network_structure, N: int, driver_probability: float):
         """
         Args:
-            graph: A representation of the road network. Keys are node numbers and values are list of connections
+            road_network: A representation of the road network. Keys are node numbers and values are list of connections
             N: Number of cars to simulate
         """
-        self.graph = graph
+        self.road_network = road_network
         self.N = N
         self.traffic_count = dict()
-        self.drivers = [Driver(graph, driver_probability) for _ in range(N)]
+        self.drivers = [Driver(road_network, driver_probability) for _ in range(N)]
 
     def evaluation_edge(self, a: float, b: float, u: int):
         """
@@ -28,15 +29,21 @@ class TrafficSelfishDrivers:
         """
         total = 0
         for i, j in zip(route[:-1], route[1:]):
-            edge = self.graph[i][j]
+            edge = self.road_network[i][j]
             edge_traffic = self.traffic_count[i, j]
             total += self.evaluation_edge(*edge, edge_traffic)
             # print(f"Travel time from node {i} to node {j}: {self.evaluation_edge(*edge, edge_trafic)}")
 
         return total
 
+    def update_road_network(self, graph):
+        """
+        Update the graph to a new one
+        """
+        self.road_network = graph
+
     def run(self):
-        self.traffic_count = np.zeros((len(self.graph), len(self.graph)), dtype=int)
+        self.traffic_count = np.zeros((len(self.road_network), len(self.road_network)), dtype=int)
         routes = [driver.get_route() for driver in self.drivers]
         for route in routes:
             i = route[:-1]
