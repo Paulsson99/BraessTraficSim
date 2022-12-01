@@ -4,3 +4,6 @@
 #
 #    pip-compile
 #
+
+setuptools~=61.2.0
+numpy~=1.22.3
