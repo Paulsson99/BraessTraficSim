@@ -21,7 +21,7 @@ class LargeNetwork:
         self.layer_colors = mcp.gen_color(cmap="winter", n=self.number_of_layers)
         self.generate_multilayered_graph(*self.size_of_each_layer)
 
-        self.traffic = None
+        self.traffic_in_edges = None
         self.traffic_parameters = {}  # dict {edges: (a,b)}
         self.traffic_parameters_original = None
         self.generate_traffic_parameters()
@@ -53,30 +53,49 @@ class LargeNetwork:
 
     def add_edge(self, edge: tuple):
         """
-        Add edge (u,v) to the network,
+        Add edge (u,v) to the network
+        If the edge already exist do nothing
         Args:
             edge: A list of how many nodes per layer
         """
-        self.G.add_edge(*edge)
-        self.traffic_parameters[edge] = self.traffic_parameters_original[edge]
+        edge_list = [edge for edge in self.G.edges]
+        if edge not in edge_list:
+            self.G.add_edge(*edge)
+            # Assign from random parameters or (0,0)
+            # self.traffic_parameters[edge] = self.traffic_parameters_original[edge]
+            self.traffic_parameters[edge] = (0, 0)
+        else:
+            print('The edge you want to add already exists')
 
     def remove_edge(self, edge: tuple):
         """
         Remove edge (u,v) from the network
+        If the edge does not exist don't do anything
         Args:
             edge: A list of how many nodes per layer
         """
-        self.G.remove_edge(*edge)
-        del self.traffic_parameters[edge]
+        edge_list = [edge for edge in self.G.edges]
+        if edge in edge_list:
+            self.G.remove_edge(*edge)
+            del self.traffic_parameters[edge]
+        else:
+            print('The edge that you ant to remove does not exist')
 
-    def assign_traffic_to_edges(self):
+    def assign_traffic_to_edges(self, traffic_in_edges):
         """
         Assign traffic/weights to edges
+            :param traffic_in_edges: Traffic in each edge
+            :type traffic_in_edges: np.ndarray
         """
+        self.traffic_in_edges = traffic_in_edges
         edge_list = [edge for edge in self.G.edges]
         for edge in edge_list:
             from_edge, to_edge = edge
-            self.G[from_edge][to_edge]['weight'] = self.traffic[edge]
+            self.G[from_edge][to_edge]['weight'] = traffic_in_edges[edge]
+
+        # This is just for the debug, printing the weights for eah edge
+        # for item in nx.get_edge_attributes(self.G, 'weight').items(): # Get weights
+        #   print(item)
 
     def plot_initial_graph(self):
         """
@@ -87,7 +106,7 @@ class LargeNetwork:
         plt.figure(figsize=(8, 8))
         nx.draw(self.G, pos, node_color=node_color, with_labels=True, arrows=True, arrowstyle='-|>', arrowsize=20)
         plt.axis("equal")
-        plt.show()
+        plt.show(block=False)
 
     def plot_weighted_graph(self):
         """
@@ -100,16 +119,21 @@ class LargeNetwork:
         pos = nx.multipartite_layout(self.G, subset_key="layer")
 
         fig, ax = plt.subplots(1, figsize=(12, 8))
+        # Draw network with node labels and weighted arrows
         nx.draw(self.G, pos, node_color=node_color,
                 edge_color=edge_color, edge_cmap=edge_cmap,
                 with_labels=True, arrows=True,
                 arrowstyle='-|>', arrowsize=20, width=2)
+
+        # Draw weights between edges
+        edge_labels = nx.get_edge_attributes(self.G, "weight")
+        nx.draw_networkx_edge_labels(self.G, pos, edge_labels=edge_labels)
         ax.axis("equal")
 
-        sm = plt.cm.ScalarMappable(cmap=edge_cmap, norm=plt.Normalize(vmin=0, vmax=np.max(self.traffic)))
+        sm = plt.cm.ScalarMappable(cmap=edge_cmap, norm=plt.Normalize(vmin=0, vmax=np.max(self.traffic_in_edges)))
         sm._A = []
         fig.colorbar(sm, label='Traffic count')
-        plt.show()
+        plt.show(block=False)
 
     def convert_to_graph_to_dict(self):
         """
@@ -148,9 +172,8 @@ def main():
     pprint(road_network)
     large_network.plot_initial_graph()
 
-    large_network.remove_edge((4, 8))
-
-    large_network.add_edge((4, 8))
+    traffic_in_edges = np.random.rand(sum(size_of_each_layer), sum(size_of_each_layer))
+    large_network.assign_traffic_to_edges(traffic_in_edges)
 
 
 if __name__ == '__main__':

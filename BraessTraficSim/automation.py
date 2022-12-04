@@ -6,6 +6,7 @@ from pprint import pprint
 from large_network import LargeNetwork
 from trafficSelfishDrivers import TrafficSelfishDrivers
 
+# Initalization of the large network
 size_of_each_layer = [1, 3, 3, 1]
 large_network = LargeNetwork(size_of_each_layer=size_of_each_layer)
 
@@ -17,29 +18,39 @@ def plot_mean_travel_times(travel_times: list[list[float]], ax=None, label: str 
     ax.plot(np.arange(len(mean_travel_times)), mean_travel_times, label=label)
 
 
-def generate_initial_road_network():
+def generate_initial_road_network(plot_graph):
     """
     Generate a road network in dict{dict} format by removing some edges.
+
+        :param plot_graph: Show plot
+        :type plot_graph: bool
+
     """
     pprint(large_network.convert_to_graph_to_dict())
     edge_to_remove_list = [(1, 4), (3, 6)]
     for edge_to_remove in edge_to_remove_list:
         large_network.remove_edge(edge_to_remove)
-
-    #  large_network.plot_initial_graph()
+    if plot_graph:
+        large_network.plot_initial_graph()
     road_network = large_network.convert_to_graph_to_dict()
     return road_network
 
 
-def generate_new_road_network():
+def generate_new_road_network(plot_graph):
     """
     Generate a road network in dict{dict} format by adding some edges.
+
+        :param plot_graph: Show plot
+        :type plot_graph: bool
+
     """
     edge_to_add_list = [(1, 4)]
     for edge_to_add in edge_to_add_list:
         large_network.add_edge(edge_to_add)
 
-    #  large_network.plot_initial_graph()
+    if plot_graph:
+        large_network.plot_initial_graph()
+
     road_network = large_network.convert_to_graph_to_dict()
     return road_network
 
@@ -51,16 +62,15 @@ def run_simulation(probability_list):
 
         :param probability_list: A list of probabilities
         :type probability_list: np.ndarray
-        :return: traffic as an array
 
     """
-    n_drivers = 10
+    n_drivers = 100
 
     L1 = 20
     L2 = 400
-
-    initial_road_network = generate_initial_road_network()
-    modified_road_network = generate_new_road_network()
+    plot_graph = True
+    initial_road_network = generate_initial_road_network(plot_graph=plot_graph)
+    modified_road_network = generate_new_road_network(plot_graph=plot_graph)
 
     fig, ax = plt.subplots(1)
 
@@ -81,8 +91,12 @@ def run_simulation(probability_list):
             traffic_time.append(travel_times)
             pbar.update()
 
-    plot_mean_travel_times(travel_times=traffic_time, ax=ax, label=fr"$p={p}$")
+        # Plot the traffic
+        traffic_in_edges = sim.traffic_count
+        large_network.assign_traffic_to_edges(traffic_in_edges=traffic_in_edges)
+        large_network.plot_weighted_graph()
 
+    plot_mean_travel_times(travel_times=traffic_time, ax=ax, label=fr"$p={p}$")
     ax.legend()
     plt.show()
 
