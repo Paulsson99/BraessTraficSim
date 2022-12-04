@@ -108,7 +108,7 @@ class LargeNetwork:
         plt.axis("equal")
         plt.show(block=False)
 
-    def plot_weighted_graph(self):
+    def plot_weighted_graph(self, driver_probability):
         """
         Plot graph with colored edges with respect to the weights
         """
@@ -118,7 +118,7 @@ class LargeNetwork:
         node_color = [self.layer_colors[data["layer"]] for v, data in self.G.nodes(data=True)]
         pos = nx.multipartite_layout(self.G, subset_key="layer")
 
-        fig, ax = plt.subplots(1, figsize=(12, 8))
+        fig, ax = plt.subplots(1, figsize=(10, 6))
         # Draw network with node labels and weighted arrows
         nx.draw(self.G, pos, node_color=node_color,
                 edge_color=edge_color, edge_cmap=edge_cmap,
@@ -129,6 +129,7 @@ class LargeNetwork:
         edge_labels = nx.get_edge_attributes(self.G, "weight")
         nx.draw_networkx_edge_labels(self.G, pos, edge_labels=edge_labels)
         ax.axis("equal")
+        ax.set_title(f'p = {driver_probability:.2f}')
 
         sm = plt.cm.ScalarMappable(cmap=edge_cmap, norm=plt.Normalize(vmin=0, vmax=np.max(self.traffic_in_edges)))
         sm._A = []

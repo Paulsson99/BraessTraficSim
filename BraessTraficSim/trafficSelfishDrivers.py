@@ -1,5 +1,6 @@
 import numpy as np
 from driver import Driver
+from pprint import pprint
 
 road_network_structure = dict[int, dict[int, tuple[float]]]
 
@@ -16,6 +17,7 @@ class TrafficSelfishDrivers:
         self.N = N
         self.traffic_count = dict()
         self.drivers = [Driver(road_network, driver_probability) for _ in range(N)]
+        self.driver_probability = driver_probability
 
     def evaluation_edge(self, a: float, b: float, u: int):
         """
@@ -36,11 +38,13 @@ class TrafficSelfishDrivers:
 
         return total
 
-    def update_road_network(self, graph):
+    def update_road_network(self, road_network):
         """
-        Update the graph to a new one
+        Update the road network for each driver to a new one
         """
-        self.road_network = graph
+        self.road_network = road_network
+        for driver in self.drivers:
+            driver.update_road_network(road_network=road_network)
 
     def run(self):
         self.traffic_count = np.zeros((len(self.road_network), len(self.road_network)), dtype=int)
@@ -55,4 +59,3 @@ class TrafficSelfishDrivers:
             driver.update_route(travel_time)
 
         return travel_times, routes
-

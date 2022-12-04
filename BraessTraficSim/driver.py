@@ -7,7 +7,7 @@ class Driver:
 
     def __init__(self, road_network: road_network_structure, p: float) -> None:
         self.road_network = road_network
-        self.route = self.generate_random_route(0, max(k for k, v in self.road_network.items()))
+        self.route = self.generate_random_route(start_node=0, end_node=max(k for k, v in self.road_network.items()))
         self.p = p
         self.best_travel_time = np.inf
         self.possible_route = None
@@ -21,9 +21,15 @@ class Driver:
             route.append(np.random.choice(pos_next))
         return route
 
+    def update_road_network(self, road_network):
+        """
+        Update the road network to a new one
+        """
+        self.road_network = road_network
+
     def get_route(self):
         if np.random.random() < self.p:
-            self.possible_route = self.generate_random_route(0, max(k for k, v in self.road_network.items()))
+            self.possible_route = self.generate_random_route(start_node=0, end_node=max(k for k, v in self.road_network.items()))
             return self.possible_route
         else:
             self.possible_route = None
