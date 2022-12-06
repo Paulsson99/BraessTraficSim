@@ -13,12 +13,11 @@ class LargeNetwork:
         Create a large network
         Args:
             size_of_each_layer: A list of how many nodes per layer
-            traffic: Traffic matrix between the edges
         """
         self.G = None
         self.number_of_layers = len(size_of_each_layer)
         self.size_of_each_layer = size_of_each_layer
-        self.layer_colors = mcp.gen_color(cmap="winter", n=self.number_of_layers)
+        self.layer_colors = mcp.gen_color(cmap="cool", n=self.number_of_layers)
         self.generate_multilayered_graph(*self.size_of_each_layer)
 
         self.traffic_in_edges = None
@@ -43,7 +42,7 @@ class LargeNetwork:
         """
         extents = nx.utils.pairwise(itertools.accumulate((0,) + size_of_each_layer))
         layers = [range(start, end) for start, end in extents]
-        self.G = nx.Graph()
+        self.G = nx.DiGraph()  # Graph vs DiGraph: Graph (u,v)==(v,u), DiGraph (u,v) != (v,u)
 
         for (i, layer) in enumerate(layers):
             self.G.add_nodes_from(layer, layer=i)
@@ -58,14 +57,15 @@ class LargeNetwork:
         Args:
             edge: A list of how many nodes per layer
         """
-        edge_list = [edge for edge in self.G.edges]
-        if edge not in edge_list:
+        if not self.G.has_edge(*edge):
             self.G.add_edge(*edge)
+            edge_list = [edge for edge in self.G.edges]
+
             # Assign from random parameters or (0,0)
             # self.traffic_parameters[edge] = self.traffic_parameters_original[edge]
             self.traffic_parameters[edge] = (0, 0)
         else:
-            print('The edge you want to add already exists')
+            print(f'The edge {edge} that you want to add already exists')
 
     def remove_edge(self, edge: tuple):
         """
@@ -74,12 +74,11 @@ class LargeNetwork:
         Args:
             edge: A list of how many nodes per layer
         """
-        edge_list = [edge for edge in self.G.edges]
-        if edge in edge_list:
+        if self.G.has_edge(*edge):
             self.G.remove_edge(*edge)
             del self.traffic_parameters[edge]
         else:
-            print('The edge that you ant to remove does not exist')
+            print(f'The edge {edge} that you ant to remove does not exist')
 
     def assign_traffic_to_edges(self, traffic_in_edges):
         """
@@ -104,7 +103,8 @@ class LargeNetwork:
         node_color = [self.layer_colors[data["layer"]] for v, data in self.G.nodes(data=True)]
         pos = nx.multipartite_layout(self.G, subset_key="layer")
         plt.figure(figsize=(8, 8))
-        nx.draw(self.G, pos, node_color=node_color, with_labels=True, arrows=True, arrowstyle='-|>', arrowsize=20)
+        nx.draw(self.G, pos, node_color=node_color, node_size=400,
+                with_labels=True, arrows=True, arrowstyle='-|>', arrowsize=20)
         plt.axis("equal")
         plt.show(block=False)
 
@@ -112,28 +112,50 @@ class LargeNetwork:
         """
         Plot graph with colored edges with respect to the weights
         """
-        edges, edge_color = zip(*nx.get_edge_attributes(self.G, 'weight').items())  # Get weights
-        edge_cmap = LinearSegmentedColormap.from_list('gr', ["g", "r"], N=256)
+        # Extract edges that are bidirectional
+        curved_edges = [edge for edge in self.G.edges() if reversed(edge) in self.G.edges()]
+        straight_edges = list(set(self.G.edges()) - set(curved_edges))
 
         node_color = [self.layer_colors[data["layer"]] for v, data in self.G.nodes(data=True)]
+        edge_cmap = LinearSegmentedColormap.from_list(name='grey-black', colors=["grey", "black"], N=256)
+
+        edges, edge_weights = zip(*nx.get_edge_attributes(self.G, 'weight').items())  # Get weights
         pos = nx.multipartite_layout(self.G, subset_key="layer")
 
-        fig, ax = plt.subplots(1, figsize=(10, 6))
-        # Draw network with node labels and weighted arrows
-        nx.draw(self.G, pos, node_color=node_color,
-                edge_color=edge_color, edge_cmap=edge_cmap,
-                with_labels=True, arrows=True,
-                arrowstyle='-|>', arrowsize=20, width=2)
+        # Dictionary with edges as keys and weights as values
+        edge_weight_dict = dict(zip(edges, edge_weights))
+        straight_edges_weights= [edge_weight_dict[edge] for edge in straight_edges]
 
-        # Draw weights between edges
+        fig, ax = plt.subplots(1, figsize=(12, 8))
+
+        # Draw node labels
+        nx.draw_networkx_labels(self.G, pos, ax=ax,
+                                font_size=12)
+        # Draw nodes
+        nx.draw_networkx_nodes(self.G, pos, ax=ax,
+                               node_color=node_color, node_size=400)
+        # Draw one directed edges
+        nx.draw_networkx_edges(self.G, pos,
+                               edgelist=straight_edges, edge_color=straight_edges_weights, edge_cmap=edge_cmap,
+                               arrows=True, arrowstyle='-|>', arrowsize=20,
+                               width= 3*np.asarray(straight_edges_weights) / np.max(edge_weights),
+                               connectionstyle='arc3, rad = 0.0')
+        # If there are som bidirectional edges, we draw them as curved
+        if curved_edges:
+            curved_edges_weights = [edge_weight_dict[edge] for edge in curved_edges]
+            nx.draw_networkx_edges(self.G, pos,
+                                   edgelist=curved_edges, edge_color=curved_edges_weights, edge_cmap=edge_cmap,
+                                   arrows=True, arrowstyle='-|>', arrowsize=20,
+                                   width=3*np.asarray(curved_edges_weights) / np.max(edge_weights),
+                                   connectionstyle='arc3, rad = 0.2')
+
+        # Draw weights as labels for all edges
         edge_labels = nx.get_edge_attributes(self.G, "weight")
-        nx.draw_networkx_edge_labels(self.G, pos, edge_labels=edge_labels)
-        ax.axis("equal")
+        nx.draw_networkx_edge_labels(self.G, pos, edge_labels=edge_labels, label_pos=0.4)
+
+        ax.axis("off")
         ax.set_title(f'p = {driver_probability:.2f}')
 
-        sm = plt.cm.ScalarMappable(cmap=edge_cmap, norm=plt.Normalize(vmin=0, vmax=np.max(self.traffic_in_edges)))
-        sm._A = []
-        fig.colorbar(sm, label='Traffic count')
         plt.show(block=False)
 
     def convert_to_graph_to_dict(self):
@@ -148,7 +170,7 @@ class LargeNetwork:
 
         for node in node_list:
             edges_dict = {}
-
+            #  Looping through the tuples with the first part equals to node
             while node == edge_list[edge_index][0]:
                 to_edge = edge_list[edge_index][1]
                 edge_key = edge_list[edge_index]
@@ -166,15 +188,24 @@ class LargeNetwork:
 
 def main():
     # Initialise structure of the network
-    size_of_each_layer = [1, 3, 4, 3, 1]
+    size_of_each_layer = [1, 3, 3, 1]
     large_network = LargeNetwork(size_of_each_layer=size_of_each_layer)
 
-    road_network = large_network.convert_to_graph_to_dict()
-    pprint(road_network)
+    #  road_network = large_network.convert_to_graph_to_dict()
+    #  pprint(road_network)
     large_network.plot_initial_graph()
 
-    traffic_in_edges = np.random.rand(sum(size_of_each_layer), sum(size_of_each_layer))
+    # large_network.add_edge((4, 5))
+    # large_network.add_edge((5, 4))
+
+    pprint(large_network.convert_to_graph_to_dict())
+
+    # large_network.plot_initial_graph()
+
+    traffic_in_edges = np.round(np.random.rand(sum(size_of_each_layer), sum(size_of_each_layer)), 3)
     large_network.assign_traffic_to_edges(traffic_in_edges)
+    # large_network.plot_weighted_graph(driver_probability=0.1)
+    plt.show()
 
 
 if __name__ == '__main__':

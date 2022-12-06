@@ -27,7 +27,7 @@ def generate_initial_road_network(plot_graph):
         :type plot_graph: bool
 
     """
-    edge_to_remove_list = [(1, 4), (3, 6)]
+    edge_to_remove_list = [(2, 5)]
 
     for edge_to_remove in edge_to_remove_list:
         large_network.remove_edge(edge_to_remove)
@@ -46,12 +46,13 @@ def generate_new_road_network(plot_graph):
         :type plot_graph: bool
 
     """
-    edge_to_add_list = [(3, 6)]
+    edge_to_add_list = [(2, 5), (4, 5), (5, 4)]
     for edge_to_add in edge_to_add_list:
         large_network.add_edge(edge_to_add)
 
     if plot_graph:
         large_network.plot_initial_graph()
+        pprint(large_network.convert_to_graph_to_dict())
 
     road_network = large_network.convert_to_graph_to_dict()
     return road_network
@@ -79,6 +80,8 @@ def run_average_time_simulation(probability_list):
     for p in tqdm(probability_list):
         initial_road_network = generate_initial_road_network(plot_graph=plot_initial_graph)
         sim = TrafficSelfishDrivers(road_network=initial_road_network, N=n_drivers, driver_probability=p)
+        sim.update_road_network(road_network=initial_road_network)
+
         pbar = trange(L1 + L2, leave=False)
 
         traffic_time = []
@@ -95,6 +98,7 @@ def run_average_time_simulation(probability_list):
         # Adding roads to the network
         modified_road_network = generate_new_road_network(plot_graph=plot_initial_graph)
         sim.update_road_network(road_network=modified_road_network)
+
         for _ in range(L2):
             travel_times, _ = sim.run()
             traffic_time.append(travel_times)
@@ -110,7 +114,7 @@ def run_average_time_simulation(probability_list):
 
 
 def main():
-    p_list = np.array([0.01, 0.1])
+    p_list = np.array([0.10])
     run_average_time_simulation(probability_list=p_list)
 
 
