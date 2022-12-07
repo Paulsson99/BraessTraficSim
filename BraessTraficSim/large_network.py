@@ -100,12 +100,34 @@ class LargeNetwork:
         """
         Plot initial graph without weights to the edges
         """
+
+        # Extract edges that are bidirectional
+        curved_edges = [edge for edge in self.G.edges() if reversed(edge) in self.G.edges()]
+        straight_edges = list(set(self.G.edges()) - set(curved_edges))
+
         node_color = [self.layer_colors[data["layer"]] for v, data in self.G.nodes(data=True)]
         pos = nx.multipartite_layout(self.G, subset_key="layer")
-        plt.figure(figsize=(8, 8))
-        nx.draw(self.G, pos, node_color=node_color, node_size=400,
-                with_labels=True, arrows=True, arrowstyle='-|>', arrowsize=20)
-        plt.axis("equal")
+
+        fig, ax = plt.subplots(1, figsize=(12, 8))
+
+        # Draw node labels
+        nx.draw_networkx_labels(self.G, pos, ax=ax,
+                                font_size=12)
+        # Draw nodes
+        nx.draw_networkx_nodes(self.G, pos, ax=ax,
+                               node_color=node_color, node_size=400)
+        # Draw one directed edges
+        nx.draw_networkx_edges(self.G, pos,
+                               edgelist=straight_edges, edge_color='black',
+                               arrows=True, arrowstyle='-|>', arrowsize=16,
+                               width=2, connectionstyle='arc3, rad = 0.0')
+        # If there are som bidirectional edges, we draw them as curved
+        if curved_edges:
+            nx.draw_networkx_edges(self.G, pos,
+                                   edgelist=curved_edges, edge_color='black',
+                                   arrows=True, arrowstyle='-|>', arrowsize=20,
+                                   width=2, connectionstyle='arc3, rad = 0.2')
+        ax.axis('off')
         plt.show(block=False)
 
     def plot_weighted_graph(self, driver_probability):
@@ -137,7 +159,7 @@ class LargeNetwork:
         # Draw one directed edges
         nx.draw_networkx_edges(self.G, pos,
                                edgelist=straight_edges, edge_color=straight_edges_weights, edge_cmap=edge_cmap,
-                               arrows=True, arrowstyle='-|>', arrowsize=20,
+                               arrows=True, arrowstyle='-|>', arrowsize=16,
                                width= 3*np.asarray(straight_edges_weights) / np.max(edge_weights),
                                connectionstyle='arc3, rad = 0.0')
         # If there are som bidirectional edges, we draw them as curved
@@ -145,7 +167,7 @@ class LargeNetwork:
             curved_edges_weights = [edge_weight_dict[edge] for edge in curved_edges]
             nx.draw_networkx_edges(self.G, pos,
                                    edgelist=curved_edges, edge_color=curved_edges_weights, edge_cmap=edge_cmap,
-                                   arrows=True, arrowstyle='-|>', arrowsize=20,
+                                   arrows=True, arrowstyle='-|>', arrowsize=15,
                                    width=3*np.asarray(curved_edges_weights) / np.max(edge_weights),
                                    connectionstyle='arc3, rad = 0.2')
 
@@ -193,10 +215,10 @@ def main():
 
     #  road_network = large_network.convert_to_graph_to_dict()
     #  pprint(road_network)
-    large_network.plot_initial_graph()
+    # large_network.plot_initial_graph()
 
-    # large_network.add_edge((4, 5))
-    # large_network.add_edge((5, 4))
+    large_network.add_edge((4, 5))
+    large_network.add_edge((5, 4))
 
     pprint(large_network.convert_to_graph_to_dict())
 
@@ -204,7 +226,7 @@ def main():
 
     traffic_in_edges = np.round(np.random.rand(sum(size_of_each_layer), sum(size_of_each_layer)), 3)
     large_network.assign_traffic_to_edges(traffic_in_edges)
-    # large_network.plot_weighted_graph(driver_probability=0.1)
+    large_network.plot_weighted_graph(driver_probability=0.1)
     plt.show()
 
 

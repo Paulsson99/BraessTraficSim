@@ -7,7 +7,7 @@ from large_network import LargeNetwork
 from trafficSelfishDrivers import TrafficSelfishDrivers
 
 # Initialization of the large network
-size_of_each_layer = [1, 3, 3, 1]
+size_of_each_layer = [1, 2, 2, 1]
 large_network = LargeNetwork(size_of_each_layer=size_of_each_layer)
 
 
@@ -27,7 +27,7 @@ def generate_initial_road_network(plot_graph):
         :type plot_graph: bool
 
     """
-    edge_to_remove_list = [(2, 5)]
+    edge_to_remove_list = [(3, 4), (4, 3)]
 
     for edge_to_remove in edge_to_remove_list:
         large_network.remove_edge(edge_to_remove)
@@ -46,7 +46,7 @@ def generate_new_road_network(plot_graph):
         :type plot_graph: bool
 
     """
-    edge_to_add_list = [(2, 5), (4, 5), (5, 4)]
+    edge_to_add_list = [(3, 4), (4, 3)]
     for edge_to_add in edge_to_add_list:
         large_network.add_edge(edge_to_add)
 
@@ -114,6 +114,11 @@ def run_average_time_simulation(probability_list):
 
 
 def main():
+    # plot_initial_graph = True
+    # initial_road_network = generate_initial_road_network(plot_graph=plot_initial_graph)
+    # modified_road_network = generate_new_road_network(plot_graph=plot_initial_graph)
+    # plt.show()
+
     p_list = np.array([0.10])
     run_average_time_simulation(probability_list=p_list)
 
