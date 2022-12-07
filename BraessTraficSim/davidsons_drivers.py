@@ -22,7 +22,7 @@ def main():
     transient_time = 100
     simulation_time = 1000
     p = 0.01
-    simulation_on = True
+    simulation_on = False
 
     c_list = np.array(range(1000, 4000, 500))
     eps_list = np.arange(0.2, 0.8, 0.1)
