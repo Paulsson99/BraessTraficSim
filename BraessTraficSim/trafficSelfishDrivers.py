@@ -19,11 +19,21 @@ class TrafficSelfishDrivers:
         self.drivers = [Driver(road_network, driver_probability) for _ in range(N)]
         self.driver_probability = driver_probability
 
-    def evaluation_edge(self, a: float, b: float, u: int):
+    def evaluation_edge(self, t0: float, eps: float, c: float, u: int):
         """
-        Evaluate the time to travel over an edge
+        Compute travel time depending on the traffic, i.e the parameters
+
+        :param t0:
+        :param eps:
+        :param c:
+        :param u:
+        :return:
+
         """
-        return a * u + b
+        t_max = 1000 * t0
+        if u >= c:
+            return t_max
+        return min(t_max, t0 + t0 * eps * u / (c - u))
 
     def evaluate_route(self, route):
         """

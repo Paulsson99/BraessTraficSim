@@ -20,19 +20,20 @@ class LargeNetwork:
         self.layer_colors = mcp.gen_color(cmap="cool", n=self.number_of_layers)
         self.generate_multilayered_graph(*self.size_of_each_layer)
 
+        self.davidson_parameters = None
         self.traffic_in_edges = None
-        self.traffic_parameters = {}  # dict {edges: (a,b)}
-        self.traffic_parameters_original = None
-        self.generate_traffic_parameters()
+        self.traffic_parameters = {}  # dict {edges: (delta, epsilon, c)}
 
-    def generate_traffic_parameters(self):
+    def assign_traffic_parameters(self, davidson_parameters):
         """
         Generate traffic parameters a,b to each edge
+        :param
+            davidson_parameters: (delta_std, eps_std, c_std)
         """
+        self.davidson_parameters = davidson_parameters
         edge_list = [edge for edge in self.G.edges]
         for edge in edge_list:
-            self.traffic_parameters[edge] = (100 * np.random.rand(), 100 * np.random.rand())
-        self.traffic_parameters_original = self.traffic_parameters.copy()
+            self.traffic_parameters[edge] = davidson_parameters
 
     def generate_multilayered_graph(self, *size_of_each_layer):
         """
@@ -62,8 +63,7 @@ class LargeNetwork:
             edge_list = [edge for edge in self.G.edges]
 
             # Assign from random parameters or (0,0)
-            # self.traffic_parameters[edge] = self.traffic_parameters_original[edge]
-            self.traffic_parameters[edge] = (0, 0)
+            self.traffic_parameters[edge] = self.davidson_parameters
         else:
             print(f'The edge {edge} that you want to add already exists')
 
@@ -146,7 +146,7 @@ class LargeNetwork:
 
         # Dictionary with edges as keys and weights as values
         edge_weight_dict = dict(zip(edges, edge_weights))
-        straight_edges_weights= [edge_weight_dict[edge] for edge in straight_edges]
+        straight_edges_weights = [edge_weight_dict[edge] for edge in straight_edges]
 
         fig, ax = plt.subplots(1, figsize=(12, 8))
 
@@ -160,7 +160,7 @@ class LargeNetwork:
         nx.draw_networkx_edges(self.G, pos,
                                edgelist=straight_edges, edge_color=straight_edges_weights, edge_cmap=edge_cmap,
                                arrows=True, arrowstyle='-|>', arrowsize=16,
-                               width= 3*np.asarray(straight_edges_weights) / np.max(edge_weights),
+                               width=3 * np.asarray(straight_edges_weights) / np.max(edge_weights),
                                connectionstyle='arc3, rad = 0.0')
         # If there are som bidirectional edges, we draw them as curved
         if curved_edges:
@@ -168,7 +168,7 @@ class LargeNetwork:
             nx.draw_networkx_edges(self.G, pos,
                                    edgelist=curved_edges, edge_color=curved_edges_weights, edge_cmap=edge_cmap,
                                    arrows=True, arrowstyle='-|>', arrowsize=15,
-                                   width=3*np.asarray(curved_edges_weights) / np.max(edge_weights),
+                                   width=3 * np.asarray(curved_edges_weights) / np.max(edge_weights),
                                    connectionstyle='arc3, rad = 0.2')
 
         # Draw weights as labels for all edges
@@ -198,8 +198,7 @@ class LargeNetwork:
                 edge_key = edge_list[edge_index]
 
                 # Add traffic parameters to the edge
-                a, b = self.traffic_parameters[edge_key]
-                edges_dict[to_edge] = (a, b)
+                edges_dict[to_edge] = self.traffic_parameters[edge_key]
                 if edge_index < len(edge_list) - 1:
                     edge_index += 1
                 else:
@@ -212,21 +211,21 @@ def main():
     # Initialise structure of the network
     size_of_each_layer = [1, 3, 3, 1]
     large_network = LargeNetwork(size_of_each_layer=size_of_each_layer)
-
-    #  road_network = large_network.convert_to_graph_to_dict()
-    #  pprint(road_network)
-    # large_network.plot_initial_graph()
-
-    large_network.add_edge((4, 5))
-    large_network.add_edge((5, 4))
+    large_network.assign_traffic_parameters((1, 2, 3))
 
     pprint(large_network.convert_to_graph_to_dict())
+    large_network.plot_initial_graph()
+
+    # large_network.add_edge((4, 5))
+    # large_network.add_edge((5, 4))
+    #road_network = large_network.convert_to_graph_to_dict()
+    #pprint(road_network)
 
     # large_network.plot_initial_graph()
 
-    traffic_in_edges = np.round(np.random.rand(sum(size_of_each_layer), sum(size_of_each_layer)), 3)
-    large_network.assign_traffic_to_edges(traffic_in_edges)
-    large_network.plot_weighted_graph(driver_probability=0.1)
+    # traffic_in_edges = np.round(np.random.rand(sum(size_of_each_layer), sum(size_of_each_layer)), 3)
+    # large_network.assign_traffic_to_edges(traffic_in_edges)
+    # large_network.plot_weighted_graph(driver_probability=0.1)
     plt.show()
 
 

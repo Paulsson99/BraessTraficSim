@@ -19,7 +19,7 @@ def plot_mean_travel_times(travel_times: list[list[float]], ax=None, label: str 
     ax.set(xlabel=r'$Time step$', ylabel='Mean travel time')
 
 
-def generate_initial_road_network(plot_graph):
+def generate_initial_road_network(plot_graph, davidson_parameters):
     """
     Generate a road network in dict{dict} format by removing some edges.
 
@@ -34,11 +34,11 @@ def generate_initial_road_network(plot_graph):
 
     if plot_graph:
         large_network.plot_initial_graph()
-    road_network = large_network.convert_to_graph_to_dict()
+    road_network = large_network.convert_to_graph_to_dict(davidson_parameters)
     return road_network
 
 
-def generate_new_road_network(plot_graph):
+def generate_new_road_network(plot_graph, davidson_parameters):
     """
     Generate a road network in dict{dict} format by adding some edges.
 
@@ -52,9 +52,9 @@ def generate_new_road_network(plot_graph):
 
     if plot_graph:
         large_network.plot_initial_graph()
-        pprint(large_network.convert_to_graph_to_dict())
+        pprint(large_network.convert_to_graph_to_dict(davidson_parameters))
 
-    road_network = large_network.convert_to_graph_to_dict()
+    road_network = large_network.convert_to_graph_to_dict(davidson_parameters)
     return road_network
 
 
