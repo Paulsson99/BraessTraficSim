@@ -7,8 +7,8 @@ from tqdm import trange, tqdm
 
 class Davidsons(TraficSelfishDrivers):
 
-    def __init__(self, graph: RoadNetwork, N: int):
-        super().__init__(graph, N)
+    def __init__(self, graph: RoadNetwork, N: int, driver_prob: float):
+        super().__init__(graph, N, driver_prob)
 
     def evaluation_edge(self, t0: float, eps: float, c: float, u: int):
         t_max = 1000 * t0
@@ -19,11 +19,13 @@ class Davidsons(TraficSelfishDrivers):
 
 def main():
     drivers = 4000
+    transient_time = 100
     simulation_time = 1000
-    simulation_on = False
+    p = 0.01
+    simulation_on = True
 
-    c_list = np.array(range(1000, 2000, 500)) #1000, 4000, 500
-    eps_list = np.arange(0.2, 0.4, 0.1) #0.2, 0.8, 0.1
+    c_list = np.array(range(1000, 4000, 500))
+    eps_list = np.arange(0.2, 0.8, 0.1)
     time_difference = np.zeros((len(c_list), len(eps_list)), dtype=np.float_)
 
     c_std = 2500
@@ -34,14 +36,21 @@ def main():
             for j, eps in enumerate(eps_list):
                 road_network = {
                     0: {1: (0.01, eps_std, c_std), 2: (0.01, eps_std, c_std)},
-                    1: {3: (0.01, eps_std, c_std), 2: (0.01, eps, c)},
-                    2: {3: (0.01, eps_std, c_std), 1: (0.01, eps, c)},
+                    1: {3: (0.01, eps_std, c_std)},
+                    2: {3: (0.01, eps_std, c_std)},
                     3: {}
                 }
 
-                trafic = Davidsons(road_network, drivers)
+                trafic = Davidsons(road_network, drivers, driver_prob=p)
                 trafic.run()
+
+                for _ in range(transient_time):
+                    trafic.run()
                 travel_times0, _ = trafic.run()
+
+                # Add the two new roads between node 1 and 2
+                trafic.add_road(1, 2, (0.01, eps, c))
+
                 for _ in trange(simulation_time):
                     trafic.run()
                 travel_times, _ = trafic.run()
