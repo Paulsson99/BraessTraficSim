@@ -64,8 +64,13 @@ def main():
     # draw_road_network(road_network, trafic.trafic_count)
     fig, ax = plt.subplots(layout='constrained')
     pos = ax.imshow(time_difference, origin='lower')
-    ax.set_xticks(range(len(c_list)), c_list)
-    ax.set_yticks(range(len(eps_list)), eps_list)
+    c_label = ['{:.0f}'.format(c) for c in c_list]
+    eps_label = ['{:.2f}'.format(eps) for eps in eps_list]
+    ax.set_xticks(range(len(c_list)), c_label)
+    ax.set_yticks(range(len(eps_list)), eps_label)
+    ax.autoscale(tight=True)
+    ax.set_xlabel('Capacity $c$')
+    ax.set_ylabel(r'$\epsilon$')
     fig.colorbar(pos, ax=ax)
     plt.show()
 
