@@ -11,9 +11,9 @@ class LargeNetwork:
     def __init__(self, size_of_each_layer: list):
         """
         Create a large network
-        Args:
-            size_of_each_layer: A list of how many nodes per layer
+            :param size_of_each_layer: A list of how many nodes per layer
         """
+
         self.G = None
         self.number_of_layers = len(size_of_each_layer)
         self.size_of_each_layer = size_of_each_layer
@@ -24,22 +24,10 @@ class LargeNetwork:
         self.traffic_in_edges = None
         self.traffic_parameters = {}  # dict {edges: (delta, epsilon, c)}
 
-    def assign_traffic_parameters(self, davidson_parameters):
-        """
-        Generate traffic parameters a,b to each edge
-        :param
-            davidson_parameters: (delta_std, eps_std, c_std)
-        """
-        self.davidson_parameters = davidson_parameters
-        edge_list = [edge for edge in self.G.edges]
-        for edge in edge_list:
-            self.traffic_parameters[edge] = davidson_parameters
-
-    def generate_multilayered_graph(self, *size_of_each_layer):
+    def generate_multilayered_graph(self, *size_of_each_layer: list):
         """
         Generate a multilayered graph
-        Args:
-            size_of_each_layer: A list of how many nodes per layer
+            :param size_of_each_layer: A list of how many nodes per layer
         """
         extents = nx.utils.pairwise(itertools.accumulate((0,) + size_of_each_layer))
         layers = [range(start, end) for start, end in extents]
@@ -55,8 +43,7 @@ class LargeNetwork:
         """
         Add edge (u,v) to the network
         If the edge already exist do nothing
-        Args:
-            edge: A list of how many nodes per layer
+            :param edge: A tuple of how many nodes per layer
         """
         if not self.G.has_edge(*edge):
             self.G.add_edge(*edge)
@@ -71,8 +58,8 @@ class LargeNetwork:
         """
         Remove edge (u,v) from the network
         If the edge does not exist don't do anything
-        Args:
-            edge: A list of how many nodes per layer
+        :param
+            edge: A tuple of how many nodes per layer
         """
         if self.G.has_edge(*edge):
             self.G.remove_edge(*edge)
@@ -80,21 +67,26 @@ class LargeNetwork:
         else:
             print(f'The edge {edge} that you ant to remove does not exist')
 
-    def assign_traffic_to_edges(self, traffic_in_edges):
+    def assign_traffic_parameters(self, davidson_parameters: tuple):
+        """
+        Assign traffic parameters (t0, epsilon, c) to each edge
+            :param davidson_parameters: (t0, epsilon, c)
+        """
+        self.davidson_parameters = davidson_parameters
+        edge_list = [edge for edge in self.G.edges]
+        for edge in edge_list:
+            self.traffic_parameters[edge] = davidson_parameters
+
+    def assign_traffic_to_edges(self, traffic_in_edges: np.ndarray):
         """
         Assign traffic/weights to edges
             :param traffic_in_edges: Traffic in each edge
-            :type traffic_in_edges: np.ndarray
         """
         self.traffic_in_edges = traffic_in_edges
         edge_list = [edge for edge in self.G.edges]
         for edge in edge_list:
             from_edge, to_edge = edge
             self.G[from_edge][to_edge]['weight'] = traffic_in_edges[edge]
-
-        # This is just for the debug, printing the weights for eah edge
-        # for item in nx.get_edge_attributes(self.G, 'weight').items(): # Get weights
-        #   print(item)
 
     def plot_initial_graph(self):
         """
@@ -108,7 +100,7 @@ class LargeNetwork:
         node_color = [self.layer_colors[data["layer"]] for v, data in self.G.nodes(data=True)]
         pos = nx.multipartite_layout(self.G, subset_key="layer")
 
-        fig, ax = plt.subplots(1, figsize=(12, 8))
+        fig, ax = plt.subplots(1)
 
         # Draw node labels
         nx.draw_networkx_labels(self.G, pos, ax=ax,
@@ -127,6 +119,9 @@ class LargeNetwork:
                                    edgelist=curved_edges, edge_color='black',
                                    arrows=True, arrowstyle='-|>', arrowsize=20,
                                    width=2, connectionstyle='arc3, rad = 0.2')
+            # Draw weights as labels for all edges
+        edge_labels = nx.get_edge_attributes(self.G, "weight")
+        nx.draw_networkx_edge_labels(self.G, pos, edge_labels=edge_labels, label_pos=0.4)
         ax.axis('off')
         plt.show(block=False)
 
@@ -148,7 +143,7 @@ class LargeNetwork:
         edge_weight_dict = dict(zip(edges, edge_weights))
         straight_edges_weights = [edge_weight_dict[edge] for edge in straight_edges]
 
-        fig, ax = plt.subplots(1, figsize=(12, 8))
+        fig, ax = plt.subplots(1)
 
         # Draw node labels
         nx.draw_networkx_labels(self.G, pos, ax=ax,
@@ -162,6 +157,12 @@ class LargeNetwork:
                                arrows=True, arrowstyle='-|>', arrowsize=16,
                                width=3 * np.asarray(straight_edges_weights) / np.max(edge_weights),
                                connectionstyle='arc3, rad = 0.0')
+
+        # Draw weights labels for straight edges
+        edge_labels = nx.get_edge_attributes(self.G, "weight")
+        nx.draw_networkx_edge_labels(self.G, pos, edge_labels=dict(zip(straight_edges, straight_edges_weights)),
+                                     label_pos=0.4)
+
         # If there are som bidirectional edges, we draw them as curved
         if curved_edges:
             curved_edges_weights = [edge_weight_dict[edge] for edge in curved_edges]
@@ -170,10 +171,8 @@ class LargeNetwork:
                                    arrows=True, arrowstyle='-|>', arrowsize=15,
                                    width=3 * np.asarray(curved_edges_weights) / np.max(edge_weights),
                                    connectionstyle='arc3, rad = 0.2')
-
-        # Draw weights as labels for all edges
-        edge_labels = nx.get_edge_attributes(self.G, "weight")
-        nx.draw_networkx_edge_labels(self.G, pos, edge_labels=edge_labels, label_pos=0.4)
+            nx.draw_networkx_edge_labels(self.G, pos, edge_labels=dict(zip(curved_edges, curved_edges_weights)),
+                                         label_pos=0.25)
 
         ax.axis("off")
         ax.set_title(f'p = {driver_probability:.2f}')
@@ -209,23 +208,25 @@ class LargeNetwork:
 
 def main():
     # Initialise structure of the network
-    size_of_each_layer = [1, 3, 3, 1]
+    size_of_each_layer = [1, 2, 1]
     large_network = LargeNetwork(size_of_each_layer=size_of_each_layer)
     large_network.assign_traffic_parameters((1, 2, 3))
+    # large_network.assign_traffic_to_edges(np.array([[0, 't=T/100', 't=45', 0],
+    #                                                 [10, 11, 12, 't=45'],
+    #                                                 [20, 21, 22, 't=T/100'],
+    #                                                 [30, 31, 32, 33]]))
 
-    pprint(large_network.convert_to_graph_to_dict())
-    large_network.plot_initial_graph()
+    #  pprint(large_network.convert_to_graph_to_dict())
+    #  large_network.plot_initial_graph()
 
-    # large_network.add_edge((4, 5))
-    # large_network.add_edge((5, 4))
-    #road_network = large_network.convert_to_graph_to_dict()
-    #pprint(road_network)
-
+    large_network.add_edge((1, 2))
+    large_network.add_edge((2, 1))
+    # pprint(large_network.convert_to_graph_to_dict())
     # large_network.plot_initial_graph()
-
-    # traffic_in_edges = np.round(np.random.rand(sum(size_of_each_layer), sum(size_of_each_layer)), 3)
-    # large_network.assign_traffic_to_edges(traffic_in_edges)
-    # large_network.plot_weighted_graph(driver_probability=0.1)
+    #
+    traffic_in_edges = np.round(np.random.rand(sum(size_of_each_layer), sum(size_of_each_layer)), 3)
+    large_network.assign_traffic_to_edges(traffic_in_edges)
+    large_network.plot_weighted_graph(driver_probability=0.1)
     plt.show()
 
 

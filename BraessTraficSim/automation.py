@@ -19,14 +19,15 @@ def plot_mean_travel_times(travel_times: list[list[float]], ax=None, label: str 
     ax.set(xlabel=r'$Time step$', ylabel='Mean travel time')
 
 
-def generate_initial_road_network(plot_graph, davidson_parameters):
+def generate_initial_road_network(plot_graph: bool, davidson_parameters: tuple):
     """
     Generate a road network in dict{dict} format by removing some edges.
-
-        :param plot_graph: Show plot
-        :type plot_graph: bool
-
+        :param plot_graph: plot graph
+        :param davidson_parameters:  (t0, epsilon, c)
+        :return: road network
     """
+
+    large_network.assign_traffic_parameters(davidson_parameters=davidson_parameters)
     edge_to_remove_list = [(3, 4), (4, 3)]
 
     for edge_to_remove in edge_to_remove_list:
@@ -34,38 +35,36 @@ def generate_initial_road_network(plot_graph, davidson_parameters):
 
     if plot_graph:
         large_network.plot_initial_graph()
-    road_network = large_network.convert_to_graph_to_dict(davidson_parameters)
+    road_network = large_network.convert_to_graph_to_dict()
     return road_network
 
 
-def generate_new_road_network(plot_graph, davidson_parameters):
+def generate_new_road_network(plot_graph: bool, davidson_parameters: tuple):
     """
-    Generate a road network in dict{dict} format by adding some edges.
-
-        :param plot_graph: Show plot
-        :type plot_graph: bool
-
+    Generate a road network in dict{dict} format by removing some edges.
+        :param plot_graph: plot graph
+        :param davidson_parameters:  (t0, epsilon, c)
+        :return: road network
     """
+    large_network.assign_traffic_parameters(davidson_parameters=davidson_parameters)
     edge_to_add_list = [(3, 4), (4, 3)]
+
     for edge_to_add in edge_to_add_list:
         large_network.add_edge(edge_to_add)
 
     if plot_graph:
         large_network.plot_initial_graph()
-        pprint(large_network.convert_to_graph_to_dict(davidson_parameters))
+        pprint(large_network.convert_to_graph_to_dict())
 
-    road_network = large_network.convert_to_graph_to_dict(davidson_parameters)
+    road_network = large_network.convert_to_graph_to_dict()
     return road_network
 
 
-def run_average_time_simulation(probability_list):
+def run_average_time_simulation(probability_list: list):
     """
-
     Run simulation for each probability in the list and calculate the average time
-
         :param probability_list: A list of probabilities
         :type probability_list: np.ndarray
-
     """
     n_drivers = 1000
 
@@ -74,11 +73,11 @@ def run_average_time_simulation(probability_list):
     L2 = 400
 
     plot_initial_graph = False
-
+    davidson_parameters = (1, 2, 3)
     fig, ax = plt.subplots(1)
 
     for p in tqdm(probability_list):
-        initial_road_network = generate_initial_road_network(plot_graph=plot_initial_graph)
+        initial_road_network = generate_initial_road_network(plot_graph=plot_initial_graph, davidson_parameters=davidson_parameters)
         sim = TrafficSelfishDrivers(road_network=initial_road_network, N=n_drivers, driver_probability=p)
         sim.update_road_network(road_network=initial_road_network)
 
@@ -96,7 +95,7 @@ def run_average_time_simulation(probability_list):
         large_network.plot_weighted_graph(driver_probability=p)
 
         # Adding roads to the network
-        modified_road_network = generate_new_road_network(plot_graph=plot_initial_graph)
+        modified_road_network = generate_new_road_network(plot_graph=plot_initial_graph,davidson_parameters=davidson_parameters)
         sim.update_road_network(road_network=modified_road_network)
 
         for _ in range(L2):
