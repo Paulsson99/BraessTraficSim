@@ -198,6 +198,7 @@ class LargeNetwork:
 
             graph_dict[node] = edges_dict
             edge_list = list(set(edge_list) - set(edges_with_this_node))
+
         return graph_dict
 
 

@@ -21,16 +21,9 @@ class TrafficSelfishDrivers:
 
     def evaluation_edge(self, t0: float, eps: float, c: float, u: int):
         """
-        Compute travel time depending on the traffic, i.e the parameters
-
-        :param t0:
-        :param eps:
-        :param c:
-        :param u:
-        :return:
-
+        Compute travel time depending on the traffic, i.e. the parameters
         """
-        t_max = 1000 * t0
+        t_max = self.N * t0
         if u >= c:
             return t_max
         return min(t_max, t0 + t0 * eps * u / (c - u))
