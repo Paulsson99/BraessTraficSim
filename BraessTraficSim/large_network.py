@@ -88,9 +88,9 @@ class LargeNetwork:
             from_edge, to_edge = edge
             self.G[from_edge][to_edge]['weight'] = traffic_in_edges[edge]
 
-    def plot_initial_graph(self):
+    def plot_graph(self):
         """
-        Plot initial graph without weights to the edges
+        Plot graph without weights to the edges
         """
 
         # Extract edges that are bidirectional
@@ -113,15 +113,14 @@ class LargeNetwork:
                                edgelist=straight_edges, edge_color='black',
                                arrows=True, arrowstyle='-|>', arrowsize=16,
                                width=2, connectionstyle='arc3, rad = 0.0')
+
         # If there are som bidirectional edges, we draw them as curved
         if curved_edges:
             nx.draw_networkx_edges(self.G, pos,
                                    edgelist=curved_edges, edge_color='black',
                                    arrows=True, arrowstyle='-|>', arrowsize=20,
                                    width=2, connectionstyle='arc3, rad = 0.2')
-            # Draw weights as labels for all edges
-        edge_labels = nx.get_edge_attributes(self.G, "weight")
-        nx.draw_networkx_edge_labels(self.G, pos, edge_labels=edge_labels, label_pos=0.4)
+
         ax.axis('off')
         plt.show(block=False)
 
@@ -222,13 +221,13 @@ def main():
     #                                                 [20, 21, 22, 't=T/100'],
     #                                                 [30, 31, 32, 33]]))
     large_network.assign_traffic_parameters(min_max_road_parameters=min_max_road_parameters)
-    large_network.plot_initial_graph()
+    large_network.plot_graph()
     pprint(large_network.convert_to_graph_to_dict())
 
     large_network.add_edge((1, 2), (0, 0, 0))
     large_network.add_edge((2, 1), (0, 0, 0))
 
-    large_network.plot_initial_graph()
+    large_network.plot_graph()
     pprint(large_network.convert_to_graph_to_dict())
 
     plt.show()
