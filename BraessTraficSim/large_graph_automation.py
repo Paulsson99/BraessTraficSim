@@ -11,19 +11,10 @@ size_of_each_layer = [1, 2, 1]
 large_network = LargeNetwork(size_of_each_layer=size_of_each_layer)
 
 
-def plot_mean_travel_times(travel_times: list[list[float]], ax=None, label: str = None) -> None:
-    if ax is None:
-        _, ax = plt.subplots(1)
-    mean_travel_times = [np.mean(travel_time) for travel_time in travel_times]
-    ax.plot(np.arange(len(mean_travel_times)), mean_travel_times, label=label)
-    ax.set(xlabel=r'$Time step$', ylabel='Mean travel time')
-
-
-def generate_initial_road_network(plot_graph: bool, min_max_road_parameters: dict):
+def generate_initial_road_network(min_max_road_parameters: dict):
     """
     Generate a road network in dict{dict} format by removing some edges.
-        :param plot_graph: plot graph
-        :param min_max_road_parameters: min max (t0, epsilon, c)
+        @param min_max_road_parameters: min max (t0, epsilon, c)
         :return: road network
     """
 
@@ -33,96 +24,35 @@ def generate_initial_road_network(plot_graph: bool, min_max_road_parameters: dic
     for edge_to_remove in edge_to_remove_list:
         large_network.remove_edge(edge_to_remove)
 
-    if plot_graph:
-        large_network.plot_initial_graph()
     road_network = large_network.convert_to_graph_to_dict()
     return road_network
 
 
-def generate_new_road_network(plot_graph: bool, min_max_road_parameters: dict):
+def generate_new_road_network(min_max_road_parameters: dict):
     """
     Generate a road network in dict{dict} format by removing some edges.
-        :param plot_graph: plot graph
-        :param min_max_road_parameters:  Dictionary of min and max (t0, epsilon, c)
+        @param min_max_road_parameters:  Dictionary of min and max (t0, epsilon, c)
         :return: road network
     """
-    # large_network.assign_traffic_parameters(min_max_road_parameters=min_max_road_parameters)
     edge_to_add_list = [(1, 2), (2, 1)]
 
     for edge_to_add in edge_to_add_list:
         large_network.add_edge(edge=edge_to_add,
                                davidson_parameters=generate_random_davidson_parameters(**min_max_road_parameters))
 
-
-    if plot_graph:
-        large_network.plot_initial_graph()
-        pprint(large_network.convert_to_graph_to_dict())
-
     road_network = large_network.convert_to_graph_to_dict()
     return road_network
 
 
-def run_average_time_simulation(probability_list: list):
-    """
-    Run simulation for each probability in the list and calculate the average time
-        :param probability_list: A list of probabilities
-        :type probability_list: np.ndarray
-    """
-    n_drivers = 1000
-
-    # Time steps before and after adding a road
-    L1 = 100
-    L2 = 400
-
-    plot_initial_graph = False
-    davidson_parameters = (1, 2, 3)
-    fig, ax = plt.subplots(1)
-
-    for p in tqdm(probability_list):
-        initial_road_network = generate_initial_road_network(plot_graph=plot_initial_graph,)
-        sim = TrafficSelfishDrivers(road_network=initial_road_network, N=n_drivers, driver_probability=p)
-        sim.update_road_network(road_network=initial_road_network)
-
-        pbar = trange(L1 + L2, leave=False)
-
-        traffic_time = []
-
-        for _ in range(L1):
-            travel_times, _ = sim.run()
-            traffic_time.append(travel_times)
-            pbar.update()
-
-        # Plot the traffic before adding the road
-        large_network.assign_traffic_to_edges(traffic_in_edges=sim.traffic_count)
-        large_network.plot_weighted_graph(driver_probability=p)
-
-        # Adding roads to the network
-        modified_road_network = generate_new_road_network(plot_graph=plot_initial_graph,
-                                                          davidson_parameters=davidson_parameters)
-        sim.update_road_network(road_network=modified_road_network)
-
-        for _ in range(L2):
-            travel_times, _ = sim.run()
-            traffic_time.append(travel_times)
-            pbar.update()
-
-        # Plot the traffic after adding a road
-        large_network.assign_traffic_to_edges(traffic_in_edges=sim.traffic_count)
-        large_network.plot_weighted_graph(driver_probability=p)
-
-        plot_mean_travel_times(travel_times=traffic_time, ax=ax, label=fr"$p={p}$")
-    ax.legend()
-    plt.show()
-
-
-def run_until_equilibrium(sim: TrafficSelfishDrivers, max_iteration: int, c: float, transient_time: int, n_averages: int):
+def run_until_equilibrium(sim: TrafficSelfishDrivers, max_iteration: int, c: float, transient_time: int,
+                          n_averages: int):
     """
     Run the simulation until it find the equilibrium
-        :param sim: The trafficSelfish drivers object
-        :param max_iteration
-        :param c: A parameter that scales the mean when comparing it to the variance
-        :param transient_time: The time that we run but ignore
-        :param n_averages: Number of times we average the simulation
+        @param sim: The trafficSelfish class object
+        @param max_iteration after adding the roads
+        @param c: A parameter that scales the mean when comparing it to the variance
+        @param transient_time: The time that we run first until equilibrium
+        @param n_averages: Number of times we average the simulation
     """
     travel_time_list = []
     equilibrium_found = True
@@ -146,11 +76,19 @@ def run_until_equilibrium(sim: TrafficSelfishDrivers, max_iteration: int, c: flo
 def generate_random_davidson_parameters(min_t0: float, max_t0: float,
                                         min_eps: float, max_eps: float,
                                         min_c: float, max_c: float):
+    """
+    Generate random davidson parameters from a dict with specified intervals
+    """
     davidson_parameters = tuple(np.random.uniform([min_t0, min_eps, min_c], [max_t0, max_eps, max_c]))
     return davidson_parameters
 
 
 def paradox_prob(n_epochs: int, show_traffic_times: bool):
+    """
+    Run the simulation and count the occurrence of the paradox  
+        @param n_epochs: Number of times we run random generated davidson parameters
+        @param show_traffic_times: Plot the graphs after each epoch if true
+    """
     #################
     # Parameters of
     # the system
@@ -170,7 +108,7 @@ def paradox_prob(n_epochs: int, show_traffic_times: bool):
         "max_t0": 100,
         "min_eps": 0.1,
         "max_eps": 1,
-        "min_c": n_drivers*2,
+        "min_c": n_drivers * 2,
         "max_c": n_drivers * 10,
     }
 
@@ -180,32 +118,31 @@ def paradox_prob(n_epochs: int, show_traffic_times: bool):
     equilibrium_not_found_count = 0
     paradox_count = 0
 
-    plot_initial_graph = False
-
     with trange(n_epochs, desc=f"Chance of paradox: {paradox_count / n_epochs:.6f}") as pbar:
         for i in pbar:
             # Initial configuration of the road network
-            initial_road_network = generate_initial_road_network(plot_graph=plot_initial_graph,
-                                                                 min_max_road_parameters=min_max_road_parameters)
+            initial_road_network = generate_initial_road_network(min_max_road_parameters=min_max_road_parameters)
             sim = TrafficSelfishDrivers(road_network=initial_road_network, N=n_drivers, driver_probability=p)
             sim.update_road_network(road_network=initial_road_network)
 
-            # Try to find an equilibrium and add it to the count
             # Run the simulation for the initial configuration of the road network
+            # Try to find an equilibrium and add it to the count
             equilibrium_found, travel_times1 = run_until_equilibrium(sim=sim, max_iteration=max_iteration,
                                                                      c=0.002, transient_time=transient_time,
                                                                      n_averages=n_averages)
+
+            # Plot the equilibrium road network
             if show_traffic_times:
                 large_network.assign_traffic_to_edges(traffic_in_edges=sim.traffic_count)
-                large_network.plot_weighted_graph(driver_probability=p)
+                large_network.plot_weighted_graph()
 
+            # Add to the equilibrium count if found
             if not equilibrium_found:
                 equilibrium_not_found_count += 1
                 continue
 
             # Adding roads to the network and updating it
-            modified_road_network = generate_new_road_network(plot_graph=plot_initial_graph,
-                                                              min_max_road_parameters=min_max_road_parameters)
+            modified_road_network = generate_new_road_network(min_max_road_parameters=min_max_road_parameters)
             sim.update_road_network(road_network=modified_road_network)
 
             # Run the simulation for the modified road network
@@ -230,27 +167,21 @@ def paradox_prob(n_epochs: int, show_traffic_times: bool):
                 travel_times = travel_times1 + travel_times2
                 plt.subplots()
                 plt.plot(range(len(travel_times)), travel_times)
-                plt.axvline(x=len(travel_times1), color='black', linestyle='dashed')
+                plt.axvline(x=len(travel_times1), color='black', linestyle='dashed',
+                            label=f'Roads added at t = {len(travel_times1)}')
+                plt.xlabel('Time t'), plt.ylabel('Mean travel time')
+                plt.legend()
 
                 # Plot the traffic after adding a road
                 large_network.assign_traffic_to_edges(traffic_in_edges=sim.traffic_count)
-                large_network.plot_weighted_graph(driver_probability=p)
+                large_network.plot_weighted_graph()
                 plt.show()
 
             pbar.set_description(f"Chance of paradox: {paradox_count / (i + 1):.6f}")
 
 
-
 def main():
-    # plot_initial_graph = True
-    # initial_road_network = generate_initial_road_network(plot_graph=plot_initial_graph, davidson_parameters=(1,2,3))
-    #modified_road_network = generate_new_road_network(plot_graph=plot_initial_graph, davidson_parameters=(1,2,3))
-    #plt.show()
-
-    # run_average_time_simulation(probability_list=p_list)
-
     paradox_prob(n_epochs=10, show_traffic_times=True)
-
 
 
 if __name__ == "__main__":

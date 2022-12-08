@@ -11,7 +11,7 @@ class LargeNetwork:
     def __init__(self, size_of_each_layer: list):
         """
         Create a large network
-            :param size_of_each_layer: A list of how many nodes per layer
+            @param size_of_each_layer: A list of how many nodes per layer
         """
 
         self.G = None
@@ -26,7 +26,7 @@ class LargeNetwork:
     def generate_multilayered_graph(self, *size_of_each_layer: list):
         """
         Generate a multilayered graph
-            :param size_of_each_layer: A list of how many nodes per layer
+            @param size_of_each_layer: A list of how many nodes per layer
         """
         extents = nx.utils.pairwise(itertools.accumulate((0,) + size_of_each_layer))
         layers = [range(start, end) for start, end in extents]
@@ -38,12 +38,12 @@ class LargeNetwork:
         for layer1, layer2 in nx.utils.pairwise(layers):
             self.G.add_edges_from(itertools.product(layer1, layer2))
 
-    def add_edge(self, edge: tuple, davidson_parameters:tuple):
+    def add_edge(self, edge: tuple, davidson_parameters: tuple):
         """
         Add edge (u,v) to the network and davidson parameter to this edge
         If the edge already exist do nothing
-            :param edge: A tuple of how many nodes per layer
-            :param davidson_parameters: (t0, epsilon, c)
+            @param edge: A tuple of how many nodes per layer
+            @param davidson_parameters: (t0, epsilon, c)
         """
         if not self.G.has_edge(*edge):
             self.G.add_edge(*edge)
@@ -55,7 +55,7 @@ class LargeNetwork:
         """
         Remove edge (u,v) from the network
         If the edge does not exist don't do anything
-        :param
+        @param
             edge: A tuple of how many nodes per layer
         """
         if self.G.has_edge(*edge):
@@ -67,18 +67,20 @@ class LargeNetwork:
     def assign_traffic_parameters(self, min_max_road_parameters: dict):
         """
         Assign traffic parameters (t0, epsilon, c) to each edge
-            :param min_max_road_parameters:
+            @param min_max_road_parameters:
         """
         edge_list = [edge for edge in self.G.edges]
+        min_parameter_list = [min_max_road_parameters['min_t0'], min_max_road_parameters['min_eps'],
+                              min_max_road_parameters['min_c']]
+        max_parameter_list = [min_max_road_parameters['max_t0'], min_max_road_parameters['max_eps'],
+                              min_max_road_parameters['max_c']]
         for edge in edge_list:
-            min_parameter_list = [min_max_road_parameters['min_t0'], min_max_road_parameters['min_eps'], min_max_road_parameters['min_c']]
-            max_parameter_list = [min_max_road_parameters['max_t0'], min_max_road_parameters['max_eps'], min_max_road_parameters['max_c']]
             self.traffic_parameters[edge] = tuple(np.random.uniform(min_parameter_list, max_parameter_list))
 
     def assign_traffic_to_edges(self, traffic_in_edges: np.ndarray):
         """
         Assign traffic/weights to edges
-            :param traffic_in_edges: Traffic in each edge
+            @param traffic_in_edges: Traffic in each edge
         """
         self.traffic_in_edges = traffic_in_edges
         edge_list = [edge for edge in self.G.edges]
@@ -123,7 +125,7 @@ class LargeNetwork:
         ax.axis('off')
         plt.show(block=False)
 
-    def plot_weighted_graph(self, driver_probability):
+    def plot_weighted_graph(self):
         """
         Plot graph with colored edges with respect to the weights
         """
@@ -172,7 +174,6 @@ class LargeNetwork:
                                          label_pos=0.25)
 
         ax.axis("off")
-        ax.set_title(f'p = {driver_probability:.2f}')
 
         plt.show(block=False)
 
@@ -204,6 +205,15 @@ class LargeNetwork:
 
 
 def main():
+    min_max_road_parameters = {
+        "min_t0": 10,
+        "max_t0": 100,
+        "min_eps": 0.1,
+        "max_eps": 1,
+        "min_c": 1000 * 2,
+        "max_c": 1000 * 10,
+    }
+
     # Initialise structure of the network
     size_of_each_layer = [1, 2, 1]
     large_network = LargeNetwork(size_of_each_layer=size_of_each_layer)
@@ -211,17 +221,16 @@ def main():
     #                                                 [10, 11, 12, 't=45'],
     #                                                 [20, 21, 22, 't=T/100'],
     #                                                 [30, 31, 32, 33]]))
+    large_network.assign_traffic_parameters(min_max_road_parameters=min_max_road_parameters)
+    large_network.plot_initial_graph()
+    pprint(large_network.convert_to_graph_to_dict())
 
-    #  pprint(large_network.convert_to_graph_to_dict())
-    #  large_network.plot_initial_graph()
-    large_network.add_edge((1, 2))
-    large_network.add_edge((2, 1))
-    # pprint(large_network.convert_to_graph_to_dict())
-    # large_network.plot_initial_graph()
-    #
-    traffic_in_edges = np.round(np.random.rand(sum(size_of_each_layer), sum(size_of_each_layer)), 3)
-    large_network.assign_traffic_to_edges(traffic_in_edges)
-    large_network.plot_weighted_graph(driver_probability=0.1)
+    large_network.add_edge((1, 2), (0, 0, 0))
+    large_network.add_edge((2, 1), (0, 0, 0))
+
+    large_network.plot_initial_graph()
+    pprint(large_network.convert_to_graph_to_dict())
+
     plt.show()
 
 
