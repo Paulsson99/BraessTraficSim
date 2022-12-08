@@ -82,7 +82,8 @@ def generate_random_davidson_parameters(min_t0: float, max_t0: float,
     """
     Generate random davidson parameters from a dict with specified intervals
     """
-    davidson_parameters = tuple(np.random.uniform([min_t0, min_eps, min_c], [max_t0, max_eps, max_c]))
+    davidson_parameters = tuple(np.random.uniform(low=[min_t0, min_eps, min_c],
+                                                  high=[max_t0, max_eps, max_c]))
     return davidson_parameters
 
 

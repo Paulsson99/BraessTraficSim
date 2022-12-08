@@ -75,7 +75,7 @@ class LargeNetwork:
         max_parameter_list = [min_max_road_parameters['max_t0'], min_max_road_parameters['max_eps'],
                               min_max_road_parameters['max_c']]
         for edge in edge_list:
-            self.traffic_parameters[edge] = tuple(np.random.uniform(min_parameter_list, max_parameter_list))
+            self.traffic_parameters[edge] = tuple(np.random.uniform(low=min_parameter_list, high=max_parameter_list))
 
     def assign_traffic_to_edges(self, traffic_in_edges: np.ndarray):
         """
