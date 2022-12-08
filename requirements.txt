@@ -4,3 +4,10 @@
 #
 #    pip-compile
 #
+
+setuptools~=58.1.0
+numpy~=1.22.1
+tqdm~=4.64.1
+matplotlib~=3.5.1
+networkx~=2.8.8
+mycolorpy~=1.5.1
