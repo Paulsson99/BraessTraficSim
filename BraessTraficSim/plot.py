@@ -33,7 +33,7 @@ def draw_road_network(graph: RoadNetwork, traffic: np.ndarray):
     plot = nx.draw_circular(G, **options, edgelist=edges, edge_color=color, edge_cmap=cmap)
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=0, vmax=np.max(traffic)))
     sm._A = []
-    fig.colorbar(sm)
+    fig.colorbar(sm, label='Traffic count')
     plt.show()
 
 

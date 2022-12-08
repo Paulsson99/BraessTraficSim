@@ -185,10 +185,12 @@ def main():
 
     trafic = TraficSelfishDrivers(road_network, drivers)
 
-    for _ in trange(1000):
+    for _ in trange(10):
         trafic.run()
     travel_times, _ = trafic.run()
     print(f"Average travel time: {np.mean(travel_times)}")
+    print(travel_times)
+    print(len(travel_times))
 
     draw_road_network(road_network, trafic.trafic_count)
 
