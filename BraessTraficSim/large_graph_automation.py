@@ -41,6 +41,7 @@ def generate_new_road_network(min_max_road_parameters: dict):
                                davidson_parameters=generate_random_davidson_parameters(**min_max_road_parameters))
 
     road_network = large_network.convert_to_graph_to_dict()
+
     return road_network
 
 

@@ -183,22 +183,19 @@ class LargeNetwork:
         node_list = [node for node in self.G.nodes]
         edge_list = [edge for edge in self.G.edges]
 
-        edge_index = 0
         graph_dict = {}
 
         for node in node_list:
             edges_dict = {}
-            #  Looping through the tuples with the first part equals to node
-            while node == edge_list[edge_index][0]:
-                to_edge = edge_list[edge_index][1]
-                edge_key = edge_list[edge_index]
+            # Extract edges with edge from = this node
+            edges_with_this_node = [edge for edge in edge_list if edge[0] == node]
 
+            #  Looping through the tuples
+            for edge_key in edges_with_this_node:
+                from_edge, to_edge = edge_key
                 # Add traffic parameters to the edge
                 edges_dict[to_edge] = self.traffic_parameters[edge_key]
-                if edge_index < len(edge_list) - 1:
-                    edge_index += 1
-                else:
-                    break
+
             graph_dict[node] = edges_dict
         return graph_dict
 
