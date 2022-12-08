@@ -197,6 +197,7 @@ class LargeNetwork:
                 edges_dict[to_edge] = self.traffic_parameters[edge_key]
 
             graph_dict[node] = edges_dict
+            edge_list = list(set(edge_list) - set(edges_with_this_node))
         return graph_dict
 
 
