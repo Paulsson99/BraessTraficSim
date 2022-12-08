@@ -11,13 +11,94 @@ class Davidsons(TraficSelfishDrivers):
         super().__init__(graph, N, driver_prob)
 
     def evaluation_edge(self, t0: float, eps: float, c: float, u: int):
-        t_max = 1000 * t0
-        if u >= c:
-            return t_max
-        return min(t_max, t0 + t0 * eps * u / (c - u))
+        return t0 + t0 * eps * u / (c - u)
 
 
-def main():
+def run_until_equlibrium(trafic: Davidsons, max_iters: int, c: float, transient: int, average: int) -> list[float]:
+    travel_times = []
+    equlibrium_found = True
+    for _ in range(transient):
+        travel_t, _ = trafic.run()
+        travel_times.append(np.mean(travel_t))
+
+    for _ in range(max_iters):
+        if np.var(travel_times[-average:]) < c * np.mean(travel_times[-average:]):
+            break
+        travel_t, _ = trafic.run()
+        travel_times.append(np.mean(travel_t))
+    else:
+        # No equlibrium found
+        equlibrium_found = False
+
+    return equlibrium_found, travel_times
+
+
+def random_road(min_eps: float, max_eps: float, min_c: float, max_c: float, min_t0: float, max_t0: float) -> tuple[float, float, float]:
+    return tuple(np.random.uniform([min_t0, min_eps, min_c], [max_t0, max_eps, max_c]))
+
+
+def paradox_prob(epochs: int, show_traffic_times: bool = False):
+    drivers = 1000
+
+    road_params = {
+        "min_eps": 0.1,
+        "max_eps": 1,
+        "min_c": drivers*2,
+        "max_c": drivers * 10,
+        "min_t0": 10,
+        "max_t0": 100
+    }
+
+    transient_time = 500
+    averages = 30
+    max_iter = 2000
+    p = 0.01
+
+    equlibrium_not_found = 0
+    paradox_count = 0
+    
+    with trange(epochs, desc=f"Chance of paradox: {paradox_count / epochs:.6f}") as pbar:
+        for i in pbar:
+            road_network = {
+                0: {1: random_road(**road_params), 2: random_road(**road_params)},
+                1: {3: random_road(**road_params)},
+                2: {3: random_road(**road_params)},
+                3: {}
+            }
+
+            trafic = Davidsons(road_network, drivers, driver_prob=p)
+
+            equlibrium_found, travel_times1 = run_until_equlibrium(trafic, max_iters=max_iter, c=0.002, transient=transient_time, average=averages)
+            if not equlibrium_found:
+                equlibrium_not_found += 1
+                continue
+            trafic.add_road(nodeA=1, nodeB=2, params=random_road(**road_params), directed=True)
+            equlibrium_found, travel_times2 = run_until_equlibrium(trafic, max_iters=max_iter, c=0.002, transient=transient_time, average=averages)
+            if not equlibrium_found:
+                equlibrium_not_found += 1
+                continue
+
+            first_mean = np.mean(travel_times1[-transient_time//4:])
+            second_mean = np.mean(travel_times2[-transient_time//4:])
+
+            if first_mean < second_mean:
+                paradox_count += 1
+            
+            if show_traffic_times:
+                print(paradox_count)
+                print(trafic.graph)
+                print(f"Added road at: {len(travel_times1)}")
+                travel_times = travel_times1 + travel_times2
+                plt.plot(range(len(travel_times)), travel_times)
+                plt.show()
+    
+            pbar.set_description(f"Chance of paradox: {paradox_count / (i + 1):.6f}")
+    
+    print(f"Chance of seeing the paradox: {paradox_count / epochs:.6f}")
+    print(f"No equlibrium found: {equlibrium_not_found / epochs:.6f}")
+
+
+def heat_map():
     drivers = 4000
     transient_time = 100
     simulation_time = 1000
@@ -76,4 +157,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    paradox_prob(epochs=1000, show_traffic_times=False)
