@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pprint import pprint
 
-from large_network import LargeNetwork
-from trafficSelfishDrivers import TrafficSelfishDrivers
+from BraessTrafficSim.large_network import LargeNetwork
+from BraessTrafficSim.trafficSelfishDrivers import TrafficSelfishDrivers
 
 # Initialization of the large network
 size_of_each_layer = [1, 2, 2, 1]
