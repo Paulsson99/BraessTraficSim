@@ -20,7 +20,6 @@ class LargeNetwork:
         self.layer_colors = mcp.gen_color(cmap="cool", n=self.number_of_layers)
         self.generate_multilayered_graph(*self.size_of_each_layer)
 
-        self.davidson_parameters = None
         self.traffic_in_edges = None
         self.traffic_parameters = {}  # dict {edges: (delta, epsilon, c)}
 
@@ -39,20 +38,18 @@ class LargeNetwork:
         for layer1, layer2 in nx.utils.pairwise(layers):
             self.G.add_edges_from(itertools.product(layer1, layer2))
 
-    def add_edge(self, edge: tuple):
+    def add_edge(self, edge: tuple, davidson_parameters:tuple):
         """
-        Add edge (u,v) to the network
+        Add edge (u,v) to the network and davidson parameter to this edge
         If the edge already exist do nothing
             :param edge: A tuple of how many nodes per layer
+            :param davidson_parameters: (t0, epsilon, c)
         """
         if not self.G.has_edge(*edge):
             self.G.add_edge(*edge)
-            edge_list = [edge for edge in self.G.edges]
-
-            # Assign from random parameters or (0,0)
-            self.traffic_parameters[edge] = self.davidson_parameters
+            self.traffic_parameters[edge] = davidson_parameters
         else:
-            print(f'The edge {edge} that you want to add already exists')
+            print(f'\nThe edge {edge} that you want to add already exists')
 
     def remove_edge(self, edge: tuple):
         """
@@ -65,17 +62,18 @@ class LargeNetwork:
             self.G.remove_edge(*edge)
             del self.traffic_parameters[edge]
         else:
-            print(f'The edge {edge} that you ant to remove does not exist')
+            print(f'\nThe edge {edge} that you ant to remove does not exist')
 
-    def assign_traffic_parameters(self, davidson_parameters: tuple):
+    def assign_traffic_parameters(self, min_max_road_parameters: dict):
         """
         Assign traffic parameters (t0, epsilon, c) to each edge
-            :param davidson_parameters: (t0, epsilon, c)
+            :param min_max_road_parameters:
         """
-        self.davidson_parameters = davidson_parameters
         edge_list = [edge for edge in self.G.edges]
         for edge in edge_list:
-            self.traffic_parameters[edge] = davidson_parameters
+            min_parameter_list = [min_max_road_parameters['min_t0'], min_max_road_parameters['min_eps'], min_max_road_parameters['min_c']]
+            max_parameter_list = [min_max_road_parameters['max_t0'], min_max_road_parameters['max_eps'], min_max_road_parameters['max_c']]
+            self.traffic_parameters[edge] = tuple(np.random.uniform(min_parameter_list, max_parameter_list))
 
     def assign_traffic_to_edges(self, traffic_in_edges: np.ndarray):
         """
@@ -159,7 +157,6 @@ class LargeNetwork:
                                connectionstyle='arc3, rad = 0.0')
 
         # Draw weights labels for straight edges
-        edge_labels = nx.get_edge_attributes(self.G, "weight")
         nx.draw_networkx_edge_labels(self.G, pos, edge_labels=dict(zip(straight_edges, straight_edges_weights)),
                                      label_pos=0.4)
 
@@ -210,7 +207,6 @@ def main():
     # Initialise structure of the network
     size_of_each_layer = [1, 2, 1]
     large_network = LargeNetwork(size_of_each_layer=size_of_each_layer)
-    large_network.assign_traffic_parameters((1, 2, 3))
     # large_network.assign_traffic_to_edges(np.array([[0, 't=T/100', 't=45', 0],
     #                                                 [10, 11, 12, 't=45'],
     #                                                 [20, 21, 22, 't=T/100'],
@@ -218,7 +214,6 @@ def main():
 
     #  pprint(large_network.convert_to_graph_to_dict())
     #  large_network.plot_initial_graph()
-
     large_network.add_edge((1, 2))
     large_network.add_edge((2, 1))
     # pprint(large_network.convert_to_graph_to_dict())
