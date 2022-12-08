@@ -45,7 +45,7 @@ class Driver:
 
 class TraficSelfishDrivers:
 
-    def __init__(self, graph: RoadNetwork, N: int):
+    def __init__(self, graph: RoadNetwork, N: int, driver_prob: float):
         """
         Args:
             graph: A representation of the road network. Keys are node numbers and values are list of connections
@@ -54,13 +54,21 @@ class TraficSelfishDrivers:
         self.graph = graph
         self.N = N
         self.trafic_count = dict()
-        self.drivers = [Driver(graph, 0.01) for _ in range(N)]
+        self.drivers = [Driver(graph, driver_prob) for _ in range(N)]
 
     def evaluation_edge(self, a: float, b: float, u: int):
         """
         Evaluate the time to travel over an edge
         """
         return a * u + b
+
+    def add_road(self, nodeA: int, nodeB: int, params: tuple[float], directed: bool = False) -> None:
+        """
+        Add a road to the network
+        """
+        self.graph[nodeA][nodeB] = params
+        if not directed:
+            self.graph[nodeB][nodeA] = params
 
     def evaluate_route(self, route):
         """
