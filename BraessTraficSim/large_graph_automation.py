@@ -6,7 +6,9 @@ from pprint import pprint
 from BraessTraficSim.large_network import LargeNetwork
 from BraessTraficSim.trafficSelfishDrivers import TrafficSelfishDrivers
 
+######################################
 # Initialization of the large network
+######################################
 size_of_each_layer = [1, 2, 1]
 large_network = LargeNetwork(size_of_each_layer=size_of_each_layer)
 
@@ -105,12 +107,9 @@ def paradox_prob(n_epochs: int, show_traffic_times: bool):
     # the road network
     #################
     min_max_road_parameters = {
-        "min_t0": 10,
-        "max_t0": 100,
-        "min_eps": 0.1,
-        "max_eps": 1,
-        "min_c": n_drivers * 2,
-        "max_c": n_drivers * 10,
+        "min_t0": 10, "max_t0": 100,
+        "min_eps": 0.1, "max_eps": 1,
+        "min_c": n_drivers * 2, "max_c": n_drivers * 10,
     }
 
     #################
