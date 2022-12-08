@@ -130,3 +130,6 @@ dmypy.json
 
 # Ignore MacOs stuff
 .DS_Store
+
+# any data files
+*.csv
