@@ -32,7 +32,7 @@ class LargeNetwork:
         layers = [range(start, end) for start, end in extents]
         self.G = nx.DiGraph()  # Graph vs DiGraph: Graph (u,v)==(v,u), DiGraph (u,v) != (v,u)
 
-        for (i, layer) in enumerate(layers):
+        for i, layer in enumerate(layers):
             self.G.add_nodes_from(layer, layer=i)
 
         for layer1, layer2 in nx.utils.pairwise(layers):
@@ -154,7 +154,8 @@ class LargeNetwork:
         nx.draw_networkx_edges(self.G, pos,
                                edgelist=straight_edges, edge_color=straight_edges_weights, edge_cmap=edge_cmap,
                                arrows=True, arrowstyle='-|>', arrowsize=16,
-                               width=3 * np.asarray(straight_edges_weights) / np.max(edge_weights),
+                               # width=3 * np.asarray(straight_edges_weights) / np.max(edge_weights),
+                               width=1/np.log((1.2*np.max(edge_weights))/np.asarray(straight_edges_weights)),
                                connectionstyle='arc3, rad = 0.0')
 
         # Draw weights labels for straight edges
@@ -167,7 +168,8 @@ class LargeNetwork:
             nx.draw_networkx_edges(self.G, pos,
                                    edgelist=curved_edges, edge_color=curved_edges_weights, edge_cmap=edge_cmap,
                                    arrows=True, arrowstyle='-|>', arrowsize=15,
-                                   width=3 * np.asarray(curved_edges_weights) / np.max(edge_weights),
+                                   # width=3 * np.log(np.asarray(curved_edges_weights) / (np.max(edge_weights))+1),
+                                   width=1/np.log((1.2*np.max(edge_weights))/np.asarray(curved_edges_weights)),
                                    connectionstyle='arc3, rad = 0.2')
             nx.draw_networkx_edge_labels(self.G, pos, edge_labels=dict(zip(curved_edges, curved_edges_weights)),
                                          label_pos=0.25)

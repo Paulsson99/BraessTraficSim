@@ -9,7 +9,7 @@ from BraessTraficSim.trafficSelfishDrivers import TrafficSelfishDrivers
 ######################################
 # Initialization of the large network
 ######################################
-size_of_each_layer = [1, 2, 1]
+size_of_each_layer = [1, 2, 2, 1]
 large_network = LargeNetwork(size_of_each_layer=size_of_each_layer)
 
 
@@ -21,7 +21,7 @@ def generate_initial_road_network(min_max_road_parameters: dict):
     """
 
     large_network.assign_traffic_parameters(min_max_road_parameters=min_max_road_parameters)
-    edge_to_remove_list = [(1, 2), (2, 1)]
+    edge_to_remove_list = [(3, 4), (4, 3)]
 
     for edge_to_remove in edge_to_remove_list:
         large_network.remove_edge(edge_to_remove)
@@ -36,7 +36,7 @@ def generate_new_road_network(min_max_road_parameters: dict):
         @param min_max_road_parameters:  Dictionary of min and max (t0, epsilon, c)
         :return: road network
     """
-    edge_to_add_list = [(1, 2), (2, 1)]
+    edge_to_add_list = [(3, 4), (4, 3)]
 
     for edge_to_add in edge_to_add_list:
         large_network.add_edge(edge=edge_to_add,
