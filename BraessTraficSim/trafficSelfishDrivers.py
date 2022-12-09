@@ -1,5 +1,5 @@
 import numpy as np
-from driver import Driver
+from BraessTraficSim.driver import Driver
 from pprint import pprint
 
 road_network_structure = dict[int, dict[int, tuple[float]]]

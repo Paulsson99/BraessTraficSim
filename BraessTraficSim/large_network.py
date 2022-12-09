@@ -48,8 +48,6 @@ class LargeNetwork:
         if not self.G.has_edge(*edge):
             self.G.add_edge(*edge)
             self.traffic_parameters[edge] = davidson_parameters
-        else:
-            print(f'\nThe edge {edge} that you want to add already exists')
 
     def remove_edge(self, edge: tuple):
         """
@@ -61,8 +59,6 @@ class LargeNetwork:
         if self.G.has_edge(*edge):
             self.G.remove_edge(*edge)
             del self.traffic_parameters[edge]
-        else:
-            print(f'\nThe edge {edge} that you ant to remove does not exist')
 
     def assign_traffic_parameters(self, min_max_road_parameters: dict):
         """

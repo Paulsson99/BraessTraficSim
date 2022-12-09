@@ -9,40 +9,42 @@ from BraessTraficSim.trafficSelfishDrivers import TrafficSelfishDrivers
 ######################################
 # Initialization of the large network
 ######################################
-size_of_each_layer = [1, 2, 2, 1]
-large_network = LargeNetwork(size_of_each_layer=size_of_each_layer)
+
+def main(network_size: list[int], nodes_to_connect: list[tuple[int, int]], epochs: int, show_traffic_time: bool):
+    large_network = LargeNetwork(size_of_each_layer=network_size)
+    paradox_prob(n_epochs=epochs, network=large_network, nodes_to_connect=nodes_to_connect, show_traffic_times=show_traffic_time)
 
 
-def generate_initial_road_network(min_max_road_parameters: dict):
+def generate_initial_road_network(min_max_road_parameters: dict, network: LargeNetwork, edges_to_remove_list: list[tuple[int, int]]):
     """
     Generate a road network in dict{dict} format by removing some edges.
         @param min_max_road_parameters: min max (t0, epsilon, c)
         :return: road network
     """
 
-    large_network.assign_traffic_parameters(min_max_road_parameters=min_max_road_parameters)
-    edge_to_remove_list = [(3, 4), (4, 3)]
+    network.assign_traffic_parameters(min_max_road_parameters=min_max_road_parameters)
 
-    for edge_to_remove in edge_to_remove_list:
-        large_network.remove_edge(edge_to_remove)
+    for edge_to_remove in edges_to_remove_list:
+        network.remove_edge(edge_to_remove)
+        network.remove_edge(tuple(reversed(edge_to_remove)))
 
-    road_network = large_network.convert_to_graph_to_dict()
+    road_network = network.convert_to_graph_to_dict()
     return road_network
 
 
-def generate_new_road_network(min_max_road_parameters: dict):
+def generate_new_road_network(min_max_road_parameters: dict, network: LargeNetwork, edges_to_add_list: list[tuple[int, int]]):
     """
     Generate a road network in dict{dict} format by removing some edges.
         @param min_max_road_parameters:  Dictionary of min and max (t0, epsilon, c)
         :return: road network
     """
-    edge_to_add_list = [(3, 4), (4, 3)]
 
-    for edge_to_add in edge_to_add_list:
-        large_network.add_edge(edge=edge_to_add,
-                               davidson_parameters=generate_random_davidson_parameters(**min_max_road_parameters))
+    for edge_to_add in edges_to_add_list:
+        road_params = generate_random_davidson_parameters(**min_max_road_parameters)
+        network.add_edge(edge=edge_to_add, davidson_parameters=road_params)
+        network.add_edge(edge=tuple(reversed(edge_to_add)), davidson_parameters=road_params)
 
-    road_network = large_network.convert_to_graph_to_dict()
+    road_network = network.convert_to_graph_to_dict()
 
     return road_network
 
@@ -87,7 +89,7 @@ def generate_random_davidson_parameters(min_t0: float, max_t0: float,
     return davidson_parameters
 
 
-def paradox_prob(n_epochs: int, show_traffic_times: bool):
+def paradox_prob(n_epochs: int, network: LargeNetwork, nodes_to_connect: list[int, int], show_traffic_times: bool):
     """
     Run the simulation and count the occurrence of the paradox  
         @param n_epochs: Number of times we run random generated davidson parameters
@@ -99,7 +101,7 @@ def paradox_prob(n_epochs: int, show_traffic_times: bool):
     #################
     n_drivers = 1000
     p = 0.01
-    transient_time = 200
+    transient_time = 500
     max_iteration = 2000
     n_averages = 30
 
@@ -122,7 +124,7 @@ def paradox_prob(n_epochs: int, show_traffic_times: bool):
     with trange(n_epochs, desc=f"Chance of paradox: {paradox_count / n_epochs:.6f}") as pbar:
         for i in pbar:
             # Initial configuration of the road network
-            initial_road_network = generate_initial_road_network(min_max_road_parameters=min_max_road_parameters)
+            initial_road_network = generate_initial_road_network(min_max_road_parameters=min_max_road_parameters, network=network, edges_to_remove_list=nodes_to_connect)
             sim = TrafficSelfishDrivers(road_network=initial_road_network, N=n_drivers, driver_probability=p)
             sim.update_road_network(road_network=initial_road_network)
 
@@ -134,8 +136,8 @@ def paradox_prob(n_epochs: int, show_traffic_times: bool):
 
             # Plot the equilibrium road network
             if show_traffic_times:
-                large_network.assign_traffic_to_edges(traffic_in_edges=sim.traffic_count)
-                large_network.plot_weighted_graph()
+                network.assign_traffic_to_edges(traffic_in_edges=sim.traffic_count)
+                network.plot_weighted_graph()
 
             # Add to the equilibrium count if found
             if not equilibrium_found:
@@ -143,7 +145,7 @@ def paradox_prob(n_epochs: int, show_traffic_times: bool):
                 continue
 
             # Adding roads to the network and updating it
-            modified_road_network = generate_new_road_network(min_max_road_parameters=min_max_road_parameters)
+            modified_road_network = generate_new_road_network(min_max_road_parameters=min_max_road_parameters, network=network, edges_to_add_list=nodes_to_connect)
             sim.update_road_network(road_network=modified_road_network)
 
             # Run the simulation for the modified road network
@@ -174,16 +176,13 @@ def paradox_prob(n_epochs: int, show_traffic_times: bool):
                 plt.legend()
 
                 # Plot the traffic after adding a road
-                large_network.assign_traffic_to_edges(traffic_in_edges=sim.traffic_count)
-                large_network.plot_weighted_graph()
+                network.assign_traffic_to_edges(traffic_in_edges=sim.traffic_count)
+                network.plot_weighted_graph()
                 plt.show()
 
             pbar.set_description(f"Chance of paradox: {paradox_count / (i + 1):.6f}")
 
 
-def main():
-    paradox_prob(n_epochs=10, show_traffic_times=True)
-
-
 if __name__ == "__main__":
-    main()
+
+    main([1, 2, 1], [(1, 2)], 1, show_traffic_time=True)
