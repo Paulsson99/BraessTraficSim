@@ -16,7 +16,4 @@ def parse_args():
 def main():
     args = parse_args()
     nodes_to_connect = [(args.nodes_to_connect[i], args.nodes_to_connect[i+1]) for i in range(0, len(args.nodes_to_connect), 2)]
-
-    print(args)
-    print(nodes_to_connect)
     automation_main(network_size=args.Network, nodes_to_connect=nodes_to_connect, epochs=args.epochs, show_traffic_time=args.show)

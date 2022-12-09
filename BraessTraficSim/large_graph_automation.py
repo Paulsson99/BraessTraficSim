@@ -182,6 +182,10 @@ def paradox_prob(n_epochs: int, network: LargeNetwork, nodes_to_connect: list[in
 
             pbar.set_description(f"Chance of paradox: {paradox_count / (i + 1):.6f}")
 
+    print(f"Results for network with size: {network.size_of_each_layer}")
+    print(f"Chance of seeing the paradox: {paradox_count / n_epochs:.6f}")
+    print(f"No equlibrium found: {equilibrium_not_found_count / n_epochs:.6f}")
+
 
 if __name__ == "__main__":
 
