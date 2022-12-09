@@ -154,7 +154,6 @@ class LargeNetwork:
         nx.draw_networkx_edges(self.G, pos,
                                edgelist=straight_edges, edge_color=straight_edges_weights, edge_cmap=edge_cmap,
                                arrows=True, arrowstyle='-|>', arrowsize=16,
-                               # width=3 * np.asarray(straight_edges_weights) / np.max(edge_weights),
                                width=1/np.log((1.2*np.max(edge_weights))/np.asarray(straight_edges_weights)),
                                connectionstyle='arc3, rad = 0.0')
 
@@ -168,7 +167,6 @@ class LargeNetwork:
             nx.draw_networkx_edges(self.G, pos,
                                    edgelist=curved_edges, edge_color=curved_edges_weights, edge_cmap=edge_cmap,
                                    arrows=True, arrowstyle='-|>', arrowsize=15,
-                                   # width=3 * np.log(np.asarray(curved_edges_weights) / (np.max(edge_weights))+1),
                                    width=1/np.log((1.2*np.max(edge_weights))/np.asarray(curved_edges_weights)),
                                    connectionstyle='arc3, rad = 0.2')
             nx.draw_networkx_edge_labels(self.G, pos, edge_labels=dict(zip(curved_edges, curved_edges_weights)),
